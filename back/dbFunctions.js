@@ -4,7 +4,8 @@ const { resolve } = require('path');
 
 module.exports = {
     selectUserByMailPass,
-    insertUser
+    insertUser,
+    selectUsers
 };
 
 var dbConfig = {
@@ -13,6 +14,22 @@ var dbConfig = {
     password: "Dam2023+++",
     database: "a22martiptai_tr3"
 };
+
+function selectUsers(){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        var sql = "SELECT id, correo, usuario FROM Usuarios;";
+
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+        disconnectDB(con);
+    });
+}
 
 function selectUserByMailPass(mail, password){
     return new Promise((resolve, reject) => {

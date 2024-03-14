@@ -23,17 +23,23 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
+import { authoritzationLogin } from '~/services/communicationManager';
 const username = ref('');
 const password = ref('');
 const router = useRouter();
 
-const submitForm = () => {
+const submitForm = async() => {
   // Aquí puedes realizar acciones como enviar los datos al servidor, etc.
   // Por ahora, simplemente redirigiremos a otra página.
-  router.push('/');
+  
+  const authoritzation = await authoritzationLogin(username.value, password.value);
+  console.log(authoritzation);
+  
+  
+  //router.push('/');
 };
 </script>
+
 
 <style>
 .datos {
