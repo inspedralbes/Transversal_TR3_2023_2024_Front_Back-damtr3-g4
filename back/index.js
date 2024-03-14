@@ -22,10 +22,16 @@ const io = new Server(server, {
 
 const {
     selectUserByMailPass,
-    insertUser
+    insertUser,
+    selectUsers
 } = require("./dbFunctions");
 
+app.get("/allUsers", async(req,res)=>{
+    res.send(await selectUsers());
+});
+
 app.post("/authoritzationLogin", async (req, res) => {
+    console.log("POST :::: authoritzationLogin");
     var autho = true;
     try {
         const user = req.body;
