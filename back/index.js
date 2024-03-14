@@ -26,7 +26,7 @@ const {
     selectUsers
 } = require("./dbFunctions");
 
-app.get("/allUsers", async(req,res)=>{
+app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
 });
 
@@ -51,13 +51,22 @@ app.post("/authoritzationLogin", async (req, res) => {
 
 app.post("/insertUser", async (req, res) => {
     const user = req.body;
-    user.password = doCryptMD5Hash(req.body.password);
-    await insertUser(user.name, user.password, user.mail);
-    res.send({ response: "User inserted correctly", userData: user });
+    const infoUser = await selectUsers();
+    console.log(infoUser.correo);
+    const isUser = infoUser.find((u) => u.correo === user.mail);
+
+    if (isUser) {
+        res.send({ response: "Existing user" });
+    } else {
+        user.password = doCryptMD5Hash(req.body.password);
+        await insertUser(user.name, user.password, user.mail);
+        res.send({ response: "User inserted correctly", userData: user });
+    }
+
 });
 
 app.post("/initGame", async (req, res) => {
-    const {user, idGame} = req.body;
+    const { user, idGame } = req.body;
 
     const newGame = {
         user,
@@ -80,8 +89,8 @@ io.on("connection", async (socket) => {
         });
     });
 
-    socket.on("actualizarObjeto", ()=>{
-        
+    socket.on("actualizarObjeto", () => {
+
     });
 
     socket.on("disconnect", () => {
