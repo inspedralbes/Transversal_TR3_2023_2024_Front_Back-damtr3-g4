@@ -1,5 +1,6 @@
 var mysql = require('mysql2');
 const fs = require('fs');
+const { resolve } = require('path');
 
 module.exports = {
     selectUserByMailPass,
@@ -41,6 +42,13 @@ function insertUser(name, password, mail){
             }
         });
         disconnectDB(con);
+    });
+}
+
+function insertGame(player1Id, player2Id, result){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        
     });
 }
 

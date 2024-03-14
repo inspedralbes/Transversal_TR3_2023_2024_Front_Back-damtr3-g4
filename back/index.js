@@ -50,6 +50,16 @@ app.post("/insertUser", async (req, res) => {
     res.send({ response: "User inserted correctly", userData: user });
 });
 
+app.post("/initGame", async (req, res) => {
+    const {user, idGame} = req.body;
+
+    const newGame = {
+        user,
+        idGame,
+    };
+
+});
+
 // SOCKETS
 
 var usersConnected = [];
@@ -76,6 +86,10 @@ io.on("connection", async (socket) => {
             console.log("USER ID:: ", u.userId);
             console.log("USER SOCKET:: ", u.socketId.id);
         });
+    });
+
+    socket.on("initGame", (msg) => {
+        io.emit('initGame', msg);
     });
 });
 
