@@ -23,7 +23,8 @@ const io = new Server(server, {
 const {
     selectUserByMailPass,
     insertUser,
-    selectUsers
+    selectUsers,
+    insertGame,
 } = require("./dbFunctions");
 
 app.get("/allUsers", async(req,res)=>{
@@ -57,13 +58,30 @@ app.post("/insertUser", async (req, res) => {
 });
 
 app.post("/initGame", async (req, res) => {
-    const {user, idGame} = req.body;
-
-    const newGame = {
-        user,
-        idGame,
-    };
-
+    const {user, idGame, opponentId} = req.body;
+    try {
+        if (opponentId) {
+            await insertGame(user.id, opponentId, "En curso");
+            const newGame = {
+                user: user.usuario,
+                idGame,
+                opponentId,
+            };
+            io.emit('initGame', { response: 'Partida multijugador iniciada', game: newGame });
+            res.send({ response: 'Partida multijugador iniciada', game: newGame });
+        } else {
+            await insertGame(user.id, null, "En curso");
+            const newGame = {
+                user: user.usuario,
+                idGame,
+            };
+            io.emit('initGame', { response: 'Partida para un solo jugador iniciada', game: newGame });
+            res.send({ response: 'Partida para un solo jugador iniciada', game: newGame });
+        }
+    } catch (error) {
+        console.error("Error al iniciar la partida:", error);
+        res.status(500).send({ error: "Error al iniciar la partida" });
+    }
 });
 
 // SOCKETS
