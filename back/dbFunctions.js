@@ -70,10 +70,10 @@ function insertGame(player1Id, player2Id, resultado){
         let values;
         //Si es partida con 2 jugadores
         if (player2Id){
-            sql = "INSERT INTO Partidas (jugador1_id, jugador2_id, resultado) VALUES (?, ?, ?)";
+            sql = "INSERT INTO Partidas (jugador1_id, jugador2_id, estado) VALUES (?, ?, ?)";
             values = [player1Id, player2Id, resultado];
         } else { //Si es un partida en solitario
-            sql = "INSERT INTO Partidas (jugador1_id, resultado) VALUES (?, ?)";
+            sql = "INSERT INTO Partidas (jugador1_id, estado) VALUES (?, ?)";
             values = [player1Id, resultado];
         }
 

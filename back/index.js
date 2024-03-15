@@ -60,11 +60,13 @@ app.post("/insertUser", async (req, res) => {
 app.post("/initGame", async (req, res) => {
     const {user, idGame, opponentId} = req.body;
     try {
+        let gameId;
         if (opponentId) {
-            await insertGame(user.id, opponentId, "En curso");
+            gameId = await insertGame(user.id, opponentId, "En curso");
             const newGame = {
-                user: user.usuario,
-                idGame,
+                userId: user.id,
+                userName: user.usuario, //Para saber el nombre del jugador que crea la partida
+                idGame: gameId.insertId,
                 opponentId,
             };
             io.emit('initGame', { response: 'Partida multijugador iniciada', game: newGame });
