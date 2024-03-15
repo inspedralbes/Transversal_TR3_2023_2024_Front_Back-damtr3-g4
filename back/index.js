@@ -1,5 +1,6 @@
 const express = require("express");
 const session = require("express-session");
+
 const http = require("http");
 const fs = require("fs");
 const cors = require("cors");
@@ -13,6 +14,39 @@ const port = 3789;
 app.use(express.json());
 app.use(cors());
 
+const multer = require('multer');
+const path = require('path');
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb){
+        cb(null, './images_skins');
+    },
+    filename: function (req, file, cb){
+        cb(null, file.originalname);
+    },
+});
+
+const upload = multer({storage: storage});
+
+
+app.post("/registerSkin", upload.single('imagen'), async (req, res) => {
+    const { nombre, precio, descripcion, imagen } = req.body;
+    try {
+        const skindId = await insertSkin(nombre, precio, descripcion, imagen);
+        const newSkin = {
+            id: skindId.insertId,
+            nombre: nombre,
+            precio: precio,
+            descripcion: descripcion,
+            imagen: imagen
+        };
+        io.emit('registerSkin', { response: 'Skin dada de alta', skin: newSkin });
+        res.send({response: 'Skin dada de alta', skin: newSkin });
+    } catch (error){
+        res.status(500).send({ error: "Error al dar de alta la Skin"});
+    }
+});
+
 const io = new Server(server, {
     cors: {
         origin: "*",
@@ -25,6 +59,7 @@ const {
     insertUser,
     selectUsers,
     insertGame,
+    insertSkin,
 } = require("./dbFunctions");
 
 app.get("/allUsers", async(req,res)=>{
@@ -58,7 +93,7 @@ app.post("/insertUser", async (req, res) => {
 });
 
 app.post("/initGame", async (req, res) => {
-    const {user, idGame, opponentId} = req.body;
+    const {user, opponentId} = req.body;
     try {
         let gameId;
         if (opponentId) {
@@ -72,10 +107,11 @@ app.post("/initGame", async (req, res) => {
             io.emit('initGame', { response: 'Partida multijugador iniciada', game: newGame });
             res.send({ response: 'Partida multijugador iniciada', game: newGame });
         } else {
-            await insertGame(user.id, null, "En curso");
+            gameId = await insertGame(user.id, null, "En curso");
             const newGame = {
-                user: user.usuario,
-                idGame,
+                userId: user.id,
+                userName: user.usuario,
+                idGame: gameId.insertId,
             };
             io.emit('initGame', { response: 'Partida para un solo jugador iniciada', game: newGame });
             res.send({ response: 'Partida para un solo jugador iniciada', game: newGame });
@@ -85,6 +121,8 @@ app.post("/initGame", async (req, res) => {
         res.status(500).send({ error: "Error al iniciar la partida" });
     }
 });
+
+
 
 // SOCKETS
 

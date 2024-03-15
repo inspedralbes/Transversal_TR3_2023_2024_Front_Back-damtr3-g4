@@ -7,6 +7,7 @@ module.exports = {
     insertUser,
     selectUsers,
     insertGame,
+    insertSkin,
 };
 
 var dbConfig = {
@@ -63,7 +64,7 @@ function insertUser(name, password, mail){
     });
 }
 
-function insertGame(player1Id, player2Id, resultado){
+function insertGame(player1Id, player2Id, estado){
     return new Promise((resolve, reject) => {
         let con = conectDB();
         let sql;
@@ -71,16 +72,33 @@ function insertGame(player1Id, player2Id, resultado){
         //Si es partida con 2 jugadores
         if (player2Id){
             sql = "INSERT INTO Partidas (jugador1_id, jugador2_id, estado) VALUES (?, ?, ?)";
-            values = [player1Id, player2Id, resultado];
+            values = [player1Id, player2Id, estado];
         } else { //Si es un partida en solitario
             sql = "INSERT INTO Partidas (jugador1_id, estado) VALUES (?, ?)";
-            values = [player1Id, resultado];
+            values = [player1Id, estado];
         }
 
         con.query(sql, values, function (err, result){
             if(err){
                 reject(err);
             } else {
+                resolve(result);
+            }
+            disconnectDB(con);
+        });
+    });
+}
+
+function insertSkin(nombre, precio, descripcion, imagen ){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        let sql = "INSERT INTO Skins (nombre, precio, descripcion, imagen) VALUES (?, ?, ?, ?)";
+        let values = [nombre, precio, descripcion, imagen];
+
+        con.query(sql, values, function (err, result){
+            if(err){
+                reject(err);
+            }else {
                 resolve(result);
             }
             disconnectDB(con);
