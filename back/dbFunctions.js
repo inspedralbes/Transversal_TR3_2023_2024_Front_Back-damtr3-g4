@@ -1,9 +1,13 @@
 var mysql = require('mysql2');
 const fs = require('fs');
+const { resolve } = require('path');
 
 module.exports = {
     selectUserByMailPass,
-    insertUser
+    insertUser,
+    selectUsers,
+    insertGame,
+    insertSkin,
 };
 
 var dbConfig = {
@@ -12,6 +16,22 @@ var dbConfig = {
     password: "Dam2023+++",
     database: "a22martiptai_tr3"
 };
+
+function selectUsers(){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        var sql = "SELECT id, correo, usuario FROM Usuarios;";
+
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+        disconnectDB(con);
+    });
+}
 
 function selectUserByMailPass(mail, password){
     return new Promise((resolve, reject) => {
@@ -41,6 +61,48 @@ function insertUser(name, password, mail){
             }
         });
         disconnectDB(con);
+    });
+}
+
+function insertGame(player1Id, player2Id, estado){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        let sql;
+        let values;
+        //Si es partida con 2 jugadores
+        if (player2Id){
+            sql = "INSERT INTO Partidas (jugador1_id, jugador2_id, estado) VALUES (?, ?, ?)";
+            values = [player1Id, player2Id, estado];
+        } else { //Si es un partida en solitario
+            sql = "INSERT INTO Partidas (jugador1_id, estado) VALUES (?, ?)";
+            values = [player1Id, estado];
+        }
+
+        con.query(sql, values, function (err, result){
+            if(err){
+                reject(err);
+            } else {
+                resolve(result);
+            }
+            disconnectDB(con);
+        });
+    });
+}
+
+function insertSkin(nombre, precio, descripcion, imagen ){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        let sql = "INSERT INTO Skins (nombre, precio, descripcion, imagen) VALUES (?, ?, ?, ?)";
+        let values = [nombre, precio, descripcion, imagen];
+
+        con.query(sql, values, function (err, result){
+            if(err){
+                reject(err);
+            }else {
+                resolve(result);
+            }
+            disconnectDB(con);
+        });
     });
 }
 
