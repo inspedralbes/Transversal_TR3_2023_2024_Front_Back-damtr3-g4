@@ -25,6 +25,7 @@ function selectUsers(){
                 reject(err);
             } else {
                 resolve(result);
+               
             }
         });
         disconnectDB(con);

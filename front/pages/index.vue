@@ -1,5 +1,5 @@
 <template>
     <div>
-        <slot></slot>
+        <NuxtLink to="/loggin">Loggin</NuxtLink>
     </div>
 </template>

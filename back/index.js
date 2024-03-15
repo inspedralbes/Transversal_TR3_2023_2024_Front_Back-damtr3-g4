@@ -51,10 +51,11 @@ app.post("/authoritzationLogin", async (req, res) => {
 
 app.post("/insertUser", async (req, res) => {
     const user = req.body;
+    console.log(req.body);
     const infoUser = await selectUsers();
-    console.log(infoUser.correo);
+    console.log(infoUser);
     const isUser = infoUser.find((u) => u.correo === user.mail);
-
+    
     if (isUser) {
         res.send({ response: "Existing user" });
     } else {
