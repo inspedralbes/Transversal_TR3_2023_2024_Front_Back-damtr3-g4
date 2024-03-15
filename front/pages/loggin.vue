@@ -26,7 +26,7 @@
             </div>
           </div>
         </label>
-      </div>   
+      </div>
     </div>
   </body>
 </template>
@@ -39,36 +39,34 @@ const mail = ref('');
 const username = ref('');
 const password = ref('');
 const router = useRouter();
-
-const submitForm = async() => {
+const submitForm = async () => {
   // Aquí puedes realizar acciones como enviar los datos al servidor, etc.
   // Por ahora, simplemente redirigiremos a otra página.
-  
+
   try {
     const response = await authoritzationLogin(mail.value, password.value);
     console.log(response);
-    if(response.authorization === true){
+    if (response.authorization === true) {
       router.push('/home');
       console.log(response);
     }
-    else{
-      alert("Usuario incorrecto")     
+    else {
+      alert("Usuario incorrecto")
     }
-    
+
   } catch (error) {
-    debugger;
+
     console.error("Error al iniciar sesión:", error);
   }
 };
-const registerForm = async() => {
+const registerForm = async () => {
   // Aquí puedes realizar acciones como enviar los datos al servidor, etc.
 
   try {
-    const insert = await insertUser(username.value, mail.value,password.value);
+    const insert = await insertUser(username.value, mail.value, password.value);
     console.log(insert);
 
   } catch (error) {
-    debugger;
     console.error("Error al iniciar sesión:", error);
   }
 };
@@ -93,10 +91,11 @@ body {
   --bg-color: #fff;
   --bg-color-alt: #666;
   --main-color: #323232;
-    /* display: flex; */
-    /* flex-direction: column; */
-    /* align-items: center; */
+  /* display: flex; */
+  /* flex-direction: column; */
+  /* align-items: center; */
 }
+
 /* switch card */
 .switch {
   transform: translateY(-200px);
@@ -168,23 +167,23 @@ body {
   transition: 0.3s;
 }
 
-.toggle:checked + .slider {
+.toggle:checked+.slider {
   background-color: var(--input-focus);
 }
 
-.toggle:checked + .slider:before {
+.toggle:checked+.slider:before {
   transform: translateX(30px);
 }
 
-.toggle:checked ~ .card-side:before {
+.toggle:checked~.card-side:before {
   text-decoration: none;
 }
 
-.toggle:checked ~ .card-side:after {
+.toggle:checked~.card-side:after {
   text-decoration: underline;
 }
 
-/* card */ 
+/* card */
 
 .flip-card__inner {
   width: 550px;
@@ -192,22 +191,23 @@ body {
   position: relative;
   background-color: transparent;
   perspective: 1000px;
-    /* width: 100%;
+  /* width: 100%;
     height: 100%; */
   text-align: center;
   transition: transform 0.8s;
   transform-style: preserve-3d;
 }
 
-.toggle:checked ~ .flip-card__inner {
+.toggle:checked~.flip-card__inner {
   transform: rotateY(180deg);
 }
 
-.toggle:checked ~ .flip-card__front {
+.toggle:checked~.flip-card__front {
   box-shadow: none;
 }
 
-.flip-card__front, .flip-card__back {
+.flip-card__front,
+.flip-card__back {
   padding: 20px;
   position: absolute;
   display: flex;
@@ -265,7 +265,8 @@ body {
   border: 2px solid var(--input-focus);
 }
 
-.flip-card__btn:active, .button-confirm:active {
+.flip-card__btn:active,
+.button-confirm:active {
   box-shadow: 0px 0px var(--main-color);
   transform: translate(3px, 3px);
 }
@@ -282,5 +283,5 @@ body {
   font-weight: 600;
   color: var(--font-color);
   cursor: pointer;
-} 
+}
 </style>
