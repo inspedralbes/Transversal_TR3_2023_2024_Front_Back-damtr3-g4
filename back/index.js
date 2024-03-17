@@ -54,8 +54,7 @@ app.post("/insertUser", async (req, res) => {
     console.log(req.body);
     const infoUser = await selectUsers();
     console.log(infoUser);
-    const isUser = infoUser.find((u) => u.correo === user.mail);
-    
+    const isUser = infoUser.find((u) => u.correo === user.mail || u.usuario === user.name);
     if (isUser) {
         res.send({ response: "Existing user" });
     } else {
