@@ -5,7 +5,7 @@ const fs = require("fs");
 const cors = require("cors");
 const CryptoJS = require("crypto-js");
 const { Server } = require('socket.io');
-
+const { insertData } = require("./mongoFuntions");
 const app = express();
 const server = http.createServer(app);
 const port = 3789;
@@ -74,6 +74,13 @@ app.post("/initGame", async (req, res) => {
     };
 
 });
+// MONGO 
+app.post("/insertCharacter", async (req, res) => {
+    const data = req.body;
+    const result = await insertData(data.name, data.description, data.picture)
+    res.send({ response: "User inserted correctly" });
+});
+
 
 // SOCKETS
 

@@ -1,5 +1,5 @@
 <template>
-    <body>
+    <main>
       <div class="wrapper">
         <div class="card-switch">
           <label class="switch">
@@ -28,7 +28,7 @@
           </label>
         </div>
       </div>
-    </body>
+    </main>
   </template>
   <script setup lang="ts">
   import { ref } from 'vue';
@@ -50,6 +50,7 @@
         router.push('/home');
         console.log(response);
       }
+
       else {
         alert("Usuario incorrecto")
       }
@@ -70,11 +71,11 @@
       console.error("Error al iniciar sesión:", error);
     }
   };
+
   </script>
   
   <style>
-  body {
-    background-image: url('../juego.jpg');
+  main {
     display: flex;
     flex-direction: row-reverse;
     justify-content: center;
@@ -86,7 +87,7 @@
   
   .wrapper {
     --input-focus: #2d8cf0;
-    --font-color: #323232;
+    --font-color: #632222;
     --font-color-sub: #666;
     --bg-color: #fff;
     --bg-color-alt: #666;
