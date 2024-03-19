@@ -16,7 +16,11 @@
     </div>
 
 </template>
-<script setup>
+<script>
+export default {
+  name: 'Navigation',
+
+}
 </script>
 <style>
 .button-container {

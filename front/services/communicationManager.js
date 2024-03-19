@@ -37,3 +37,10 @@ throw new Error(
 const data = await response.json();
 return { ...data};
 }
+
+export async function getData(){
+  const response = await fetch("http://localhost:3789/getData")
+  const personatges = await response.json();
+  console.log(personatges);
+  return personatges;
+}

@@ -1,12 +1,13 @@
 const { MongoClient } = require("mongodb");
 const url =
-  "mongodb://a22martiptai:Dam2023@ac-loawaxe-shard-00-00.oadcs7f.mongodb.net:27017,ac-loawaxe-shard-00-01.oadcs7f.mongodb.net:27017,ac-loawaxe-shard-00-02.oadcs7f.mongodb.net:27017/?replicaSet=atlas-llm4yv-shard-0&ssl=true&authSource=admin";
+  "mongodb+srv://a22martiptai:Dam2023@cluster0.oadcs7f.mongodb.net/";
 const client = new MongoClient(url);
 
 const dbName = "AssetsGame";
 const collectionName = "CHARACTERS";
 module.exports = {
     insertData,
+    getData,
 }
 async function insertData(nameCharacter, description, picture) {
   try {
@@ -23,6 +24,18 @@ async function insertData(nameCharacter, description, picture) {
     console.log(`Se insertaron ${result.insertedCount} documentos.`);
     await client.close();
   } catch (err) {
+    console.log(err.message);
+  }
+}
+
+async function getData(){
+  try{
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName);
+    const result = await collection.find({}).toArray();
+    return result;
+  } catch(err){
     console.log(err.message);
   }
 }

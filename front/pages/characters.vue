@@ -1,38 +1,27 @@
 <template>
     <Navigation />
-    <div class="container-cards">
-        <div>
-            <div class="container">
-                <div class="card_box">
-                    <span></span>
-                </div>
-            </div>
-        </div>
-        <div>
-            <div class="container">
-                <div class="card_box">
-                    <span></span>
-                </div>
-            </div>
-        </div>
-        <div>
-            <div class="container">
-                <div class="card_box">
-                    <span></span>
-                </div>
-            </div>
-        </div>
+    <div v-if="personatges.length > 0">
+        <img :src="personatges[0].picture" :alt="personatges[0].name_character" />
+        <h2>{{ personatges[0].name_character }}</h2>
+        <p>{{ personatges[0].description }}</p>
     </div>
-    <Footer />
 </template>
 <script>
 import Navigation from '~/components/Navigation.vue'
-import Footer from '~/components/Footer.vue'
+import { getData } from '~/services/communicationManager';
 
 export default {
     components: {
         Navigation,
-        Footer
+    },
+    data() {
+        return {
+            personatges: [],
+        }
+    },
+    async created() {
+        this.personatges = await getData();
+        console.log(this.personatges)
     },
 }
 </script>
@@ -75,32 +64,33 @@ export default {
     align-items: center;
     justify-content: center;
 }
+
 .card_box span::before {
-  content: 'Premium';
-  position: absolute;
-  width: 150%;
-  height: 40px;
-  background-image: linear-gradient(45deg, #ff6547 0%, #ffb144  51%, #ff7053  100%);
-  transform: rotate(-45deg) translateY(-20px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  box-shadow: 0 5px 10px rgba(0,0,0,0.23);
+    content: 'Premium';
+    position: absolute;
+    width: 150%;
+    height: 40px;
+    background-image: linear-gradient(45deg, #ff6547 0%, #ffb144 51%, #ff7053 100%);
+    transform: rotate(-45deg) translateY(-20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.23);
 }
 
 .card_box span::after {
-  content: '';
-  position: absolute;
-  width: 10px;
-  bottom: 0;
-  left: 0;
-  height: 10px;
-  z-index: -1;
-  box-shadow: 140px -140px #cc3f47;
-  background-image: linear-gradient(45deg, #FF512F 0%, #F09819  51%, #FF512F  100%);
+    content: '';
+    position: absolute;
+    width: 10px;
+    bottom: 0;
+    left: 0;
+    height: 10px;
+    z-index: -1;
+    box-shadow: 140px -140px #cc3f47;
+    background-image: linear-gradient(45deg, #FF512F 0%, #F09819 51%, #FF512F 100%);
 }
 </style>
