@@ -8,6 +8,8 @@ module.exports = {
     selectUsers,
     insertGame,
     insertSkin,
+    selectPlayersInGame,
+    getIdGame
 };
 
 var dbConfig = {
@@ -17,10 +19,12 @@ var dbConfig = {
     database: "a22martiptai_tr3"
 };
 
-function selectUsers(){
+// ----------------------------------------------- FUNCIONES SQL PARA USUARIOS -------------------------------
+
+function selectUsers() {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "SELECT id, correo, usuario FROM Usuarios;";
+        var sql = "SELECT id, correo, usuario FROM Usuario;";
 
         con.query(sql, function (err, result) {
             if (err) {
@@ -33,10 +37,10 @@ function selectUsers(){
     });
 }
 
-function selectUserByMailPass(mail, password){
+function selectUserByMailPass(mail, password) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "SELECT id, correo, usuario FROM Usuarios WHERE correo='" + mail + "' and contrasenya='" + password + "';";
+        var sql = "SELECT id, correo, usuario FROM Usuario WHERE correo='" + mail + "' and contrasenya='" + password + "';";
 
         con.query(sql, function (err, result) {
             if (err) {
@@ -49,10 +53,10 @@ function selectUserByMailPass(mail, password){
     });
 }
 
-function insertUser(name, password, mail){
+function insertUser(name, password, mail) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "INSERT INTO Usuarios(usuario, contrasenya, correo) VALUES ('" + name + "','" + password + "', '" + mail + "');";
+        var sql = "INSERT INTO Usuario(usuario, contrasenya, correo) VALUES ('" + name + "','" + password + "', '" + mail + "');";
         con.query(sql, function (err, result) {
             if (err) {
                 reject(err);
@@ -64,22 +68,35 @@ function insertUser(name, password, mail){
     });
 }
 
-function insertGame(player1Id, player2Id, estado){
+
+// ----------------------------------------------- FUNCIONES SQL PARA GAMES -------------------------------
+function insertGame(numPlayers, state, password) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        let sql;
-        let values;
-        //Si es partida con 2 jugadores
-        if (player2Id){
-            sql = "INSERT INTO Partidas (jugador1_id, jugador2_id, estado) VALUES (?, ?, ?)";
-            values = [player1Id, player2Id, estado];
-        } else { //Si es un partida en solitario
-            sql = "INSERT INTO Partidas (jugador1_id, estado) VALUES (?, ?)";
-            values = [player1Id, estado];
-        }
+        let sql = "INSERT INTO Partida (Njugadores, estado, password) VALUES (?, ?, ?)";
+        let values = [numPlayers, state, password];
 
-        con.query(sql, values, function (err, result){
-            if(err){
+        con.query(sql, values, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                getIdGame(password).then((data) =>{
+                    resolve(data);
+                })
+                
+            }
+            disconnectDB(con);
+        });
+    });
+}
+
+function getIdGame(password){
+    return new Promise((resolve, reject)=>{
+        let con = conectDB();
+        let sql = "SELECT id FROM Partida WHERE password ='"+ password +"';"
+
+        con.query(sql, function (err, result) {
+            if (err) {
                 reject(err);
             } else {
                 resolve(result);
@@ -89,16 +106,32 @@ function insertGame(player1Id, player2Id, estado){
     });
 }
 
-function insertSkin(nombre, precio, descripcion, imagen ){
+function selectPlayersInGame(id, state) {
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        var sql = "SELECT Usuario.id, Usuario.usuario, Usuario.correo FROM Usuario JOIN Partida ON Usuario.id_partida = Partida.id WHERE Partida.id = '"+ id +"' AND Partida.estado = '"+ state +"'; ";
+
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+            disconnectDB(con);
+        });
+    });
+}
+
+function insertSkin(nombre, precio, descripcion, imagen) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
         let sql = "INSERT INTO Skins (nombre, precio, descripcion, imagen) VALUES (?, ?, ?, ?)";
         let values = [nombre, precio, descripcion, imagen];
 
-        con.query(sql, values, function (err, result){
-            if(err){
+        con.query(sql, values, function (err, result) {
+            if (err) {
                 reject(err);
-            }else {
+            } else {
                 resolve(result);
             }
             disconnectDB(con);
@@ -106,6 +139,7 @@ function insertSkin(nombre, precio, descripcion, imagen ){
     });
 }
 
+// ----------------------------------------------- FUNCIONES SQL PARA CONECTAR BASE DE DATOS -------------------------------
 function conectDB() {
     let con = mysql.createConnection(dbConfig)
     con.connect(function (err) {
