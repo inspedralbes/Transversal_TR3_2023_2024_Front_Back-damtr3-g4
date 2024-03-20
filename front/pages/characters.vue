@@ -1,10 +1,22 @@
 <template>
     <Navigation />
-    <div v-if="personatges.length > 0">
-        <img :src="personatges[0].picture" :alt="personatges[0].name_character" />
-        <h2>{{ personatges[0].name_character }}</h2>
-        <p>{{ personatges[0].description }}</p>
-    </div>
+    <v-main>
+        <v-container class="container">
+            <v-row>
+                <v-colum v-for="personatge in personatges" cols="12" md="4">
+                    <v-card class="card">
+                        <v-sheet>
+                            <img :src="personatges[0].picture" :alt="personatges[0].name_character"
+                                class="card-image" />
+                            <v-card-tittle>
+                                <h2>{{ personatges[0].name_character }}</h2>
+                            </v-card-tittle>
+                        </v-sheet>
+                    </v-card>
+                </v-colum>
+            </v-row>
+        </v-container>
+    </v-main>
 </template>
 <script>
 import Navigation from '~/components/Navigation.vue'
@@ -26,71 +38,43 @@ export default {
 }
 </script>
 <style>
-.container-cards {
-    margin: 20px;
-    display: flex;
-    justify-content: space-around;
-}
-
 .container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 10px;
 }
-
-.card_box {
-    width: 200px;
-    height: 250px;
-    border-radius: 20px;
-    background: linear-gradient(170deg, rgba(58, 56, 56, 0.623) 0%, rgb(31, 31, 31) 100%);
-    position: relative;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.55);
+.card {
+    box-sizing: border-box;
+    width: 190px;
+    height: 254px;
+    background: rgba(217, 217, 217, 0.58);
+    border: 1px solid white;
+    box-shadow: 12px 17px 51px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(6px);
+    border-radius: 17px;
+    text-align: center;
     cursor: pointer;
-    transition: all .3s;
-}
-
-.card_box:hover {
-    transform: scale(0.9);
-}
-
-.card_box span {
-    position: absolute;
-    overflow: hidden;
-    width: 150px;
-    height: 150px;
-    top: -10px;
-    left: -10px;
+    transition: all 0.5s;
     display: flex;
     align-items: center;
     justify-content: center;
+    user-select: none;
+    font-weight: bolder;
+    color: black;
 }
 
-.card_box span::before {
-    content: 'Premium';
-    position: absolute;
-    width: 150%;
-    height: 40px;
-    background-image: linear-gradient(45deg, #ff6547 0%, #ffb144 51%, #ff7053 100%);
-    transform: rotate(-45deg) translateY(-20px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.23);
+.card:hover {
+    border: 1px solid black;
+    transform: scale(1.05);
 }
 
-.card_box span::after {
-    content: '';
-    position: absolute;
-    width: 10px;
-    bottom: 0;
-    left: 0;
-    height: 10px;
-    z-index: -1;
-    box-shadow: 140px -140px #cc3f47;
-    background-image: linear-gradient(45deg, #FF512F 0%, #F09819 51%, #FF512F 100%);
+.card:active {
+    transform: scale(0.95) rotateZ(1.7deg);
+}
+
+.card-image {
+    max-width: 80%;
+    max-height: 80%;
+    border-radius: 17px 17px 0 0;
+    object-fit: cover;
+
 }
 </style>

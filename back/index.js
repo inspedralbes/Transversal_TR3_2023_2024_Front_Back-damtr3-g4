@@ -2,6 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const http = require("http");
 const fs = require("fs");
+const path = require('path');
 const cors = require("cors");
 const CryptoJS = require("crypto-js");
 const { Server } = require('socket.io');
@@ -11,6 +12,8 @@ const port = 3789;
 
 app.use(express.json());
 app.use(cors());
+// Servir archivos estáticos desde la carpeta 'assets'
+app.use('/assets', express.static(path.join(__dirname, 'assets')));
 
 const io = new Server(server, {
     cors: {
@@ -89,12 +92,17 @@ app.get("/getData", async (req, res) =>{
     try{
         const data = await getData();
         res.send(data);
-        console.log(data);
     } catch(err){
         console.log(err.menssage);
     } 
 
 });
+
+app.post("/selectCharacter:id", async (res, req) =>{
+    const id = req.params.id;
+    
+
+})
 
 
 // SOCKETS
