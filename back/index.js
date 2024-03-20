@@ -84,7 +84,7 @@ app.post("/initGame", async (req, res) => {
 // MONGO 
 app.post("/insertCharacter", async (req, res) => {
     const data = req.body;
-    const result = await insertData(data.name, data.description, data.picture)
+    const result = await insertData(data.name_character, data.description, data.picture)
     res.send({ response: "User inserted correctly" });
 });
 

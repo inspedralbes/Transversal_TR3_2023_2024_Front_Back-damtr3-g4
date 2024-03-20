@@ -15,14 +15,13 @@ async function insertData(nameCharacter, description, picture) {
     await client.connect();
     const database = client.db(dbName);
     const collection = database.collection(collectionName);
-    // Objeto con los datos a insertar
     const data = {
       name_character: nameCharacter,
       description: description,
       picture: picture,
     };
     const result = await collection.insertOne(data);
-    console.log(`Se insertaron ${result.insertedCount} documentos.`);
+    console.log(`Se inserto correctamente`);
     await client.close();
   } catch (err) {
     console.log(err.message);
