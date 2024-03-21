@@ -48,6 +48,7 @@ app.post("/authoritzationLogin", async (req, res) => {
         res.send({
             authorization: autho,
             name: infoUser[0].usuario,
+            mail: infoUser[0].correo,
             id: infoUser[0].id,
         });
     } catch {

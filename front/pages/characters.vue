@@ -12,7 +12,7 @@
                             <img :src="personatge.picture" :alt="personatge.name_character" class="card-image" />
                             <div class="container-buttons">
                                 <div class="buttons">
-                                    <button class="blue" @click="changeStatus(personatge)">{{ personatge.isActive ?
+                                    <button :class="{ red: !personatge.isActive }" @click="changeStatus(personatge)">{{ personatge.isActive ?
                                         'Active' : 'Desactive'}}</button>
                                 </div>
                             </div>
@@ -68,16 +68,13 @@ export default {
 }
 
 .card {
-    box-sizing: border-box;
     width: 250px;
     /* Puedes ajustar según tu diseño */
     height: 420px;
     /* Puedes ajustar según tu diseño */
     background: rgba(217, 217, 217, 0.58);
-    border: 1px solid white;
     box-shadow: 12px 17px 51px rgba(0, 0, 0, 0.22);
     backdrop-filter: blur(6px);
-    border-radius: 17px;
     text-align: center;
     cursor: pointer;
     transition: all 0.5s;
@@ -86,8 +83,12 @@ export default {
     justify-content: center;
     user-select: none;
     font-weight: bolder;
-    color: black;
     margin: 20px;
+    border: 2px black solid;
+}
+@font-face {
+  font-family:gaming;
+  src: url('../gaming.ttf');
 }
 
 .card-image {
@@ -113,6 +114,7 @@ export default {
     display: flex;
     justify-content: center;
     align-items: center;
+    font-family: gaming;
 }
 .buttons {
     display: flex;
@@ -122,7 +124,6 @@ export default {
 button {
     padding: 5px;
     margin: 5px;
-    border-radius: 50px;
     cursor: pointer;
     border: 0;
     background-color: white;
@@ -131,6 +132,7 @@ button {
     text-transform: uppercase;
     font-size: 12px;
     transition: all 0.5s ease;
+    font-family: gaming;
 }
 
 button:hover {
@@ -148,4 +150,10 @@ button:active {
     transform: translateY(10px);
     transition: 100ms;
 }
+
+button.red{
+    background-color: red;
+    color: white;
+}
+
 </style>

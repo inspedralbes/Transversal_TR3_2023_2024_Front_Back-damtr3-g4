@@ -15,27 +15,26 @@ var dbConfig = {
     database: "a22martiptai_tr3"
 };
 
-function selectUsers(){
+function selectUsers() {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "SELECT id, correo, usuario FROM Usuarios;";
+        var sql = "SELECT id, correo, usuario FROM Usuario;";
 
         con.query(sql, function (err, result) {
             if (err) {
                 reject(err);
             } else {
                 resolve(result);
-               
             }
         });
         disconnectDB(con);
     });
 }
 
-function selectUserByMailPass(mail, password){
+function selectUserByMailPass(mail, password) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "SELECT id, correo, usuario FROM Usuarios WHERE correo='" + mail + "' and contrasenya='" + password + "';";
+        var sql = "SELECT id, correo, usuario FROM Usuario WHERE correo='" + mail + "' and contrasenya='" + password + "';";
 
         con.query(sql, function (err, result) {
             if (err) {
