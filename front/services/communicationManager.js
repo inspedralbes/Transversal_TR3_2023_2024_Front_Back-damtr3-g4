@@ -44,3 +44,16 @@ export async function getData(){
   console.log(personatges);
   return personatges;
 }
+
+export async function selectCharacter(id) {
+  
+  try {
+      await fetch(`http://localhost:3789/selectCharacter/${id}`, {
+          method: 'POST', 
+      });
+      console.log(`Character with ID ${id} has been selected.`);
+  } catch (error) {
+      console.error('Error selecting character:', error);
+  }
+}
+

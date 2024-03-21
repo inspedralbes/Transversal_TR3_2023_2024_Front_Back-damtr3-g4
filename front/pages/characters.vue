@@ -1,29 +1,31 @@
 <template>
     <Navigation />
-    <v-main>
-        <v-container class="container">
-            <v-row class="row">
-                <v-colum v-for="personatge in personatges" cols="12" md="4">
-                    <v-card class="card">
-                        <v-sheet>
-                            <img :src="personatge.picture" :alt="personatge.name_character" class="card-image" />
-                            <v-card-tittle>
+    <main>
+        <div class="container">
+            <div class="row">
+                <div v-for="personatge in personatges" cols="12" md="4">
+                    <div class="card">
+                        <div>
+                            <div class="container-names">
                                 <h2>{{ personatge.name_character }}</h2>
-                            </v-card-tittle>
-                            <div class="buttons">
-                                <button class="blue">Active</button>
-                                <button class="red">Desactive</button>
                             </div>
-                        </v-sheet>
-                    </v-card>
-                </v-colum>
-            </v-row>
-        </v-container>
-    </v-main>
+                            <img :src="personatge.picture" :alt="personatge.name_character" class="card-image" />
+                            <div class="container-buttons">
+                                <div class="buttons">
+                                    <button class="blue" @click="changeStatus(personatge)">{{ personatge.isActive ?
+                                        'Active' : 'Desactive'}}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 </template>
 <script>
-import Navigation from '~/layouts/Navigation.vue'
-import { getData } from '~/services/communicationManager';
+import Navigation from '~/layouts/Navigation.vue';
+import { getData, selectCharacter } from '~/services/communicationManager';
 
 export default {
     components: {
@@ -38,6 +40,15 @@ export default {
         this.personatges = await getData();
         console.log(this.personatges)
     },
+    methods: {
+        async changeStatus(personatge) {
+            
+            personatge.isActive = !personatge.isActive;
+            this.isActive = !this.isActive;
+            await selectCharacter(personatge._id);
+            console.log(personatge._id);
+        },
+    }
 }
 </script>
 <style>
@@ -87,13 +98,29 @@ export default {
 
 }
 
+.container-buttons {
+    position: absolute;
+    bottom: 10px; /* Ajusta la distancia desde el borde inferior según tu preferencia */
+    width: 100%; /* Para que los botones ocupen todo el ancho de la tarjeta */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.container-names {
+    position: absolute;
+    top:0px; /* Ajusta la distancia desde el borde inferior según tu preferencia */
+    width: 100%; /* Para que los botones ocupen todo el ancho de la tarjeta */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 .buttons {
     display: flex;
     justify-content: center;
 }
 
 button {
-    padding: 5px; 
+    padding: 5px;
     margin: 5px;
     border-radius: 50px;
     cursor: pointer;
@@ -105,19 +132,20 @@ button {
     font-size: 12px;
     transition: all 0.5s ease;
 }
+
 button:hover {
-  letter-spacing: 3px;
-  background-color: rgba(0, 73, 144, 0.8);
-  color: hsl(0, 0%, 100%);
-  box-shadow: rgba(0, 73, 144, 0.8) 0px 7px 29px 0px;
-}
-button:active {
-  letter-spacing: 3px;
-  background-color: rgba(0, 73, 144, 0.8);
-  color: hsl(0, 0%, 100%);
-  box-shadow: rgba(0, 73, 144, 0.8) 0px 0px 0px 0px;
-  transform: translateY(10px);
-  transition: 100ms;
+    letter-spacing: 3px;
+    background-color: rgba(0, 73, 144, 0.8);
+    color: hsl(0, 0%, 100%);
+    box-shadow: rgba(0, 73, 144, 0.8) 0px 7px 29px 0px;
 }
 
+button:active {
+    letter-spacing: 3px;
+    background-color: rgba(0, 73, 144, 0.8);
+    color: hsl(0, 0%, 100%);
+    box-shadow: rgba(0, 73, 144, 0.8) 0px 0px 0px 0px;
+    transform: translateY(10px);
+    transition: 100ms;
+}
 </style>

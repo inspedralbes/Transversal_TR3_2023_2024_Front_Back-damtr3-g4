@@ -14,6 +14,7 @@ app.use(express.json());
 app.use(cors());
 // Servir archivos estáticos desde la carpeta 'assets'
 app.use('/assets', express.static(path.join(__dirname, 'assets')));
+const routeImg = path.join(__dirname, 'assetsForAndroid');
 
 const io = new Server(server, {
     cors: {
@@ -98,9 +99,20 @@ app.get("/getData", async (req, res) =>{
 
 });
 
-app.post("/selectCharacter:id", async (res, req) =>{
+app.post("/selectCharacter/:id", async (req, res) =>{
     const id = req.params.id;
+    console.log("ID::::"+id);
+    const nameFile = id + ".png";
+    const routeFile = path.join(routeImg, nameFile);
+    fs.readFile(routeFile, (error, datos) => {
+        if (error) {
+          console.error('Error al leer el archivo:', error);
+          res.status(404).send('El archivo no existe');
+          return;
+        }
     
+        console.log('El archivo existe:', nameFile);
+    });
 
 })
 
