@@ -126,7 +126,7 @@ button {
     margin: 5px;
     cursor: pointer;
     border: 0;
-    background-color: white;
+    background-color:rgba(0, 73, 144, 0.8);
     box-shadow: rgb(0 0 0 / 5%) 0 0 8px;
     letter-spacing: 1.5px;
     text-transform: uppercase;
@@ -139,14 +139,14 @@ button:hover {
     letter-spacing: 3px;
     background-color: rgba(0, 73, 144, 0.8);
     color: hsl(0, 0%, 100%);
-    box-shadow: rgba(0, 73, 144, 0.8) 0px 7px 29px 0px;
+    box-shadow: rgba(0, 0, 0, 0.8) 0px 7px 29px 0px;
 }
 
 button:active {
     letter-spacing: 3px;
     background-color: rgba(0, 73, 144, 0.8);
     color: hsl(0, 0%, 100%);
-    box-shadow: rgba(0, 73, 144, 0.8) 0px 0px 0px 0px;
+    box-shadow: rgba(0, 0, 0, 0.8) 0px 0px 0px 0px;
     transform: translateY(10px);
     transition: 100ms;
 }

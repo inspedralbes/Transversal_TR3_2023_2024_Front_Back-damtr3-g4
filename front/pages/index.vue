@@ -36,10 +36,8 @@ import { useRouter } from 'vue-router';
 import { authoritzationLogin } from '~/services/communicationManager';
 import { insertUser } from '~/services/communicationManager';
 import { useAppStore } from '@/store/loginStore';
-import authMiddleware from '@/middleware/auth';
 
 export default {
-
   setup() {
     const mail = ref('');
     const username = ref('');
