@@ -29,10 +29,10 @@ const {
     selectUsers
 } = require("./dbFunctions");
 
-const { 
+const {
     insertData,
     getData,
- } = require("./mongoFuntions");
+} = require("./mongoFuntions");
 
 app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
@@ -90,28 +90,28 @@ app.post("/insertCharacter", async (req, res) => {
     res.send({ response: "User inserted correctly" });
 });
 
-app.get("/getData", async (req, res) =>{
-    try{
+app.get("/getData", async (req, res) => {
+    try {
         const data = await getData();
         res.send(data);
-    } catch(err){
+    } catch (err) {
         console.log(err.menssage);
-    } 
+    }
 
 });
 
-app.post("/selectCharacter/:id", async (req, res) =>{
+app.post("/selectCharacter/:id", async (req, res) => {
     const id = req.params.id;
-    console.log("ID::::"+id);
+    console.log("ID::::" + id);
     const nameFile = id + ".png";
     const routeFile = path.join(routeImg, nameFile);
     fs.readFile(routeFile, (error, datos) => {
         if (error) {
-          console.error('Error al leer el archivo:', error);
-          res.status(404).send('El archivo no existe');
-          return;
+            console.error('Error al leer el archivo:', error);
+            res.status(404).send('El archivo no existe');
+            return;
         }
-    
+
         console.log('El archivo existe:', nameFile);
     });
 
@@ -160,3 +160,53 @@ function doCryptMD5Hash(password) {
     var hash = CryptoJS.MD5(password);
     return hash.toString();
 }
+
+app.post("/odooConnection", async (req, res) => {
+    const xmlrpc = require('xmlrpc');
+
+    const db = 'GameDataBase';
+    const user = 'a22jonorevel@inspedralbes.cat';
+    const password = 'Dam2023+++';
+
+    // Crear un cliente XML-RPC común para todas las llamadas
+    const clientOptions = {
+        host: '141.147.16.21',
+        port: 8089,
+        path: '/xmlrpc/2/common'
+    };
+    const client = xmlrpc.createClient(clientOptions);
+
+    client.methodCall('authenticate', [db, user, password, {}], (error, uid) => {
+        if (error) {
+            console.error('Error en la autenticación:', error);
+            res.status(500).send('Error en la autenticación');
+        } else {
+            if (uid > 0) {
+                const objectClientOptions = {
+                    host: '141.147.16.21',
+                    port: 8089,
+                    path: '/xmlrpc/2/object'
+                };
+                const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                const productData = {
+                    name: 'Nuevo producto nodejs',
+                    list_price: 100.0
+                };
+
+                objectClient.methodCall('execute_kw', [db, uid, password, 'product.product', 'create', [productData]], (error, productId) => {
+                    if (error) {
+                        console.error('Error al crear el producto:', error);
+                        res.status(500).send('Error al crear el producto');
+                    } else {
+                        console.log('ID del nuevo producto:', productId);
+                        res.status(200).send('Producto creado exitosamente');
+                    }
+                });
+            } else {
+                console.log('Autenticación fallida.');
+                res.status(401).send('Autenticación fallida');
+            }
+        }
+    });
+});
