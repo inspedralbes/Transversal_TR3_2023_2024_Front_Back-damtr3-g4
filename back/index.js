@@ -32,6 +32,7 @@ const {
 const { 
     insertData,
     getData,
+    insertBroadcast,
  } = require("./mongoFuntions");
 
 app.get("/allUsers", async (req, res) => {
@@ -60,18 +61,9 @@ app.post("/authoritzationLogin", async (req, res) => {
 
 app.post("/insertUser", async (req, res) => {
     const user = req.body;
-    console.log(req.body);
-    const infoUser = await selectUsers();
-    console.log(infoUser);
-    const isUser = infoUser.find((u) => u.correo === user.mail || u.usuario === user.name);
-    if (isUser) {
-        res.send({ response: "Existing user" });
-    } else {
-        user.password = doCryptMD5Hash(req.body.password);
-        await insertUser(user.name, user.password, user.mail);
-        res.send({ response: "User inserted correctly", userData: user });
-    }
-
+    user.password = doCryptMD5Hash(req.body.password);
+    await insertUser(user.name, user.password, user.mail);
+    res.send({ response: "User inserted correctly", userData: user });
 });
 
 app.post("/initGame", async (req, res) => {
@@ -102,6 +94,7 @@ app.get("/getData", async (req, res) =>{
 
 app.post("/selectCharacter/:id", async (req, res) =>{
     const id = req.params.id;
+    const isActive = req.body.isActive;
     console.log("ID::::"+id);
     const nameFile = id + ".png";
     const routeFile = path.join(routeImg, nameFile);
@@ -112,8 +105,15 @@ app.post("/selectCharacter/:id", async (req, res) =>{
           return;
         }
     
-        console.log('El archivo existe:', nameFile);
+        console.log('El archivo existe:', nameFile, isActive);
     });
+
+})
+
+app.post("/insertMessage", async (req, res) =>{
+    const data = req.body;
+    const result = await insertBroadcast(data.message)
+    res.send({ response: "User inserted correctly" });
 
 })
 

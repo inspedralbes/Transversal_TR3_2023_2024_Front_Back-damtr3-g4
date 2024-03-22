@@ -6,9 +6,11 @@ const client = new MongoClient(url);
 
 const dbName = "AssetsGame";
 const collectionName = "CHARACTERS";
+const collectionName2 = "BROADCAST";
 module.exports = {
     insertData,
     getData,
+    insertBroadcast,
 }
 async function insertData(nameCharacter, description, picture) {
   try {
@@ -40,14 +42,20 @@ async function getData(){
   }
 }
 
-async function selectCharacter(id){
-  try{
+async function insertBroadcast(message) {
+  try {
     await client.connect();
     const database = client.db(dbName);
-    const collection = database.collection(collectionName);
-
-    return result;
-  } catch(err){
+    const collection = database.collection(collectionName2);
+    const data = {
+      message: message,
+    };
+    const result = await collection.insertOne(data);
+    console.log(`Se inserto correctamente`);
+    await client.close();
+  } catch (err) {
     console.log(err.message);
   }
 }
+
+
