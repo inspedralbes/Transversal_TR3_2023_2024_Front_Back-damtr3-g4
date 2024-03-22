@@ -45,15 +45,23 @@ export async function getData(){
   return personatges;
 }
 
-export async function selectCharacter(id) {
-  
+export async function selectCharacter(id, isActive) {
+  console.log(isActive);
   try {
       await fetch(`http://localhost:3789/selectCharacter/${id}`, {
-          method: 'POST', 
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ isActive: isActive })
+          
       });
       console.log(`Character with ID ${id} has been selected.`);
   } catch (error) {
       console.error('Error selecting character:', error);
+      // Manejar el error según sea necesario
+      throw error;
   }
 }
+
 

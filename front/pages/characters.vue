@@ -44,10 +44,8 @@ export default {
         async changeStatus(personatge) {
             
             personatge.isActive = !personatge.isActive;
-            this.isActive = !this.isActive;
-            await selectCharacter(personatge._id);
-            console.log(personatge._id);
-        },
+                await selectCharacter(personatge._id, personatge.isActive);
+            },
     }
 }
 </script>
