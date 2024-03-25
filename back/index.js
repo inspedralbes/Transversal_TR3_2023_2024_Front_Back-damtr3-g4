@@ -161,6 +161,7 @@ function doCryptMD5Hash(password) {
     return hash.toString();
 }
 
+
 app.post("/odooConnection", async (req, res) => {
     const xmlrpc = require('xmlrpc');
 
