@@ -11,6 +11,8 @@ module.exports = {
     insertData,
     getData,
     insertBroadcast,
+    getBroadcast,
+    editMessage
 }
 async function insertData(nameCharacter, description, picture) {
   try {
@@ -20,6 +22,7 @@ async function insertData(nameCharacter, description, picture) {
     const data = {
       name_character: nameCharacter,
       description: description,
+      phraseId: phrase,
       picture: picture,
     };
     const result = await collection.insertOne(data);
@@ -42,13 +45,14 @@ async function getData(){
   }
 }
 
-async function insertBroadcast(message) {
+async function insertBroadcast(message, idCharacter) {
   try {
     await client.connect();
     const database = client.db(dbName);
     const collection = database.collection(collectionName2);
     const data = {
       message: message,
+      idCharacter: idCharacter,
     };
     const result = await collection.insertOne(data);
     console.log(`Se inserto correctamente`);
@@ -57,5 +61,38 @@ async function insertBroadcast(message) {
     console.log(err.message);
   }
 }
+
+async function getBroadcast(){
+  try{
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName2);
+    const result = await collection.find({}).toArray();
+    return result;
+  } catch(err){
+    console.log(err.message);
+  }
+}
+
+async function editMessage(id, newMessage) {
+  try {
+
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionName2);
+    const result = await collection.updateOne(
+      { _id: id },
+      { $set: { message: newMessage } }
+    );
+    return result;
+  } catch(err) {
+    console.log(err.message);
+    throw new Error("No se pudo actualizar el mensaje.");
+  }
+}
+
+
+
+
 
 
