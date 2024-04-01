@@ -91,6 +91,9 @@ export default {
 }
 </script>
 <style>
+/* body {
+  background-image: url(https://www.solofondos.com/wp-content/uploads/2023/05/desktop-wallpaper-5-retro-game-for-pc-and-mobile-gamer-retro.jpg)
+} */
 main {
   display: flex;
   flex-direction: row-reverse;
