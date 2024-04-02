@@ -89,4 +89,23 @@ export async function sendAudio(selectedAudio) {
   });
 }
 
+export async function procesOdoo(isActive) {
+  console.log(isActive);
+  try {
+    await fetch(`http://localhost:3789/procesOdoo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ isActive: isActive })
+
+    });
+  } catch (error) {
+    console.error('Error:', error);
+    // Manejar el error según sea necesario
+    throw error;
+  }
+}
+
+
 
