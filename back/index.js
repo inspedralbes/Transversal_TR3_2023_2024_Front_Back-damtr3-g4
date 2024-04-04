@@ -22,6 +22,7 @@ const routeImg = path.join(__dirname, "assetsForAndroid");
 // Ruta donde se encuentran los archivos de audio
 const audioFolder = path.join(__dirname, "music");
 app.use("/audio", express.static(audioFolder));
+
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -141,18 +142,19 @@ app.get("/getBroadcast", async (req, res) => {
   }
 });
 
-app.put("/updateMessage/:id", async (req, res) => {
+// Define la ruta para actualizar un mensaje
+app.put('/updateMessage/:id', async (req, res) => {
   const id = req.params.id;
-  const objectId = new ObjectId(id);
-  const { message } = req.body;
+  const message = req.body;
 
   try {
     if (!message) {
-      throw new Error("Se requiere un nuevo mensaje.");
+      throw new Error('Se requiere un nuevo mensaje.');
     }
 
-    const result = await editMessage(objectId, message);
-    res.send({ message: "Mensaje actualizado correctamente." });
+    const result = await editMessage(id, message.message); // Editar el mensaje
+    io.emit('messageUpdated', { id, message: message.message }); // Emitir un evento a todos los clientes conectados
+    res.send({ message: 'Mensaje actualizado correctamente.' });
   } catch (error) {
     console.log(error.message);
     res.status(500).send({ error: error.message });
@@ -182,8 +184,8 @@ app.get("/audios", (req, res) => {
 });
 
 app.post("/returnAudio", (req, res) => {
-  const audioSelected = req.body;
-  console.log(audioSelected);
+  const { audioUrl } = req.body;
+  console.log(audioUrl);
 });
 
 // ------------------------------ Odoo ----------------------------------------------------------------
@@ -447,6 +449,8 @@ io.on("connection", async (socket) => {
   socket.on("initGame", (msg) => {
     io.emit("initGame", msg);
   });
+
+
 });
 
 server.listen(port, () => {
