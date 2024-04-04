@@ -8,8 +8,9 @@ const CryptoJS = require("crypto-js");
 const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
-const port = 3789;
+const port = 3788;
 const { Client } = require('ssh2');
+const xmlrpc = require('xmlrpc'); //Se utiliza para establecer la conexión con Odoo
 
 app.use(express.json());
 app.use(cors());
@@ -75,19 +76,10 @@ app.post("/insertUser", async (req, res) => {
 
 });
 
-app.post("/initGame", async (req, res) => {
-    const { user, idGame } = req.body;
-
-    const newGame = {
-        user,
-        idGame,
-    };
-
-});
 // MONGO 
 app.post("/insertCharacter", async (req, res) => {
     const data = req.body;
-    const result = await insertData(data.name_character, data.description, data.picture)
+    const result = await insertData(data.name_character, data.description, data.picture, data.price, data.idPhrase)
     res.send({ response: "User inserted correctly" });
 });
 
@@ -329,7 +321,7 @@ app.post('/checkOdoo', async (req, res) => {
     }
 });
 
-app.post("/odooConnection", async (req, res) => {
+app.post("/InsertProductInOdoo", async (req, res) => {
     const xmlrpc = require('xmlrpc');
 
     const db = 'GameDataBase';
@@ -339,7 +331,7 @@ app.post("/odooConnection", async (req, res) => {
     // Crear un cliente XML-RPC común para todas las llamadas
     const clientOptions = {
         host: '141.147.16.21',
-        port: 8089,
+        port: 8069,
         path: '/xmlrpc/2/common'
     };
     const client = xmlrpc.createClient(clientOptions);
@@ -352,7 +344,7 @@ app.post("/odooConnection", async (req, res) => {
             if (uid > 0) {
                 const objectClientOptions = {
                     host: '141.147.16.21',
-                    port: 8089,
+                    port: 8069,
                     path: '/xmlrpc/2/object'
                 };
                 const objectClient = xmlrpc.createClient(objectClientOptions);
@@ -377,4 +369,122 @@ app.post("/odooConnection", async (req, res) => {
             }
         }
     });
+});
+
+
+app.post("/ConnectionOdoo", async (req, res) => {
+
+    const db = 'GameDataBase';
+    const user = 'a22jonorevel@inspedralbes.cat';
+    const password = 'Dam2023+++';
+
+    // Crear un cliente XML-RPC común para todas las llamadas
+    const clientOptions = {
+        host: '141.147.16.21',
+        port: 8069,
+        path: '/xmlrpc/2/common'
+    };
+    const client = xmlrpc.createClient(clientOptions);
+
+    client.methodCall('authenticate', [db, user, password, {}], (error, uid) => {
+        if (error) {
+            console.error('Error en la autenticación:', error);
+            res.status(500).send('Error en la autenticación');
+        } else {
+            if (uid > 0) {
+                const objectClientOptions = {
+                    host: '141.147.16.21',
+                    port: 8069,
+                    path: '/xmlrpc/2/object'
+                };
+                const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                objectClient.methodCall('execute_kw', [db, uid, password, 'product.product', 'search_read', [[]], {fields: ['name', 'list_price']}], (error, products) => {
+                    if (error) {
+                        console.error('Error al obtener la lista de productos:', error);
+                        res.status(500).send('Error al obtener la lista de productos');
+                    } else {
+                        console.log('Lista de productos:');
+                        products.forEach(product => {
+                            console.log(`Nombre: ${product.name}, Precio: ${product.list_price}`);
+                        });
+                        res.status(200).send('Lista de productos obtenida correctamente');
+                    }
+                });
+            } else {
+                console.log('Autenticación fallida.');
+                res.status(401).send('Autenticación fallida');
+            }
+        }
+    });
+});
+
+app.post("/migrate", async (req, res) => {
+    try {
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        // Paso 1: Obtener los datos de MongoDB
+        const mongoData = await getData();
+
+        // Paso 2: Procesar los datos y realizar la inserción en Odoo
+        for (const data of mongoData) {
+            const { name_character, description, price, picture } = data;
+
+            const productData = {
+                name: name_character,
+                description: description,
+                list_price: price,
+                image_1014: picture,
+            };
+
+            // Crear un cliente XML-RPC para Odoo
+            const clientOptions = {
+                host: '141.147.16.21',
+                port: 8069,
+                path: '/xmlrpc/2/common'
+            };
+            const client = xmlrpc.createClient(clientOptions);
+
+            // Autenticar en Odoo
+            client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+                if (error) {
+                    console.error('Error en la autenticación:', error);
+                    res.status(500).send('Error en la autenticación');
+                } else {
+                    if (uid > 0) {
+                        const objectClientOptions = {
+                            host: '141.147.16.21',
+                            port: 8069,
+                            path: '/xmlrpc/2/object'
+                        };
+                        const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                        // Insertar el producto en Odoo
+                        objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'product.product', 'create', [productData]], (error, productId) => {
+                            if (error) {
+                                console.error('Error al crear el producto:', error);
+                                // Tratar errores de inserción en Odoo
+                            } else {
+                                console.log('ID del nuevo producto:', productId);
+                                // Manejar inserción exitosa en Odoo
+                            }
+                        });
+                    } else {
+                        console.log('Autenticación fallida.');
+                        res.status(401).send('Autenticación fallida');
+                    }
+                }
+            });
+        }
+
+        // Paso 3: Enviar respuesta de éxito
+        res.status(200).send("Migración exitosa de MongoDB a Odoo.");
+    } catch (error) {
+        console.error("Error en la migración:", error);
+        res.status(500).send("Error en la migración de MongoDB a Odoo.");
+    }
 });

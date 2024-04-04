@@ -10,7 +10,7 @@ module.exports = {
     insertData,
     getData,
 }
-async function insertData(nameCharacter, description, picture) {
+async function insertData(nameCharacter, description, picture, price, idPhrase) {
   try {
     await client.connect();
     const database = client.db(dbName);
@@ -19,6 +19,8 @@ async function insertData(nameCharacter, description, picture) {
       name_character: nameCharacter,
       description: description,
       picture: picture,
+      price: price,
+      idPhrase: idPhrase,
     };
     const result = await collection.insertOne(data);
     console.log(`Se inserto correctamente`);
