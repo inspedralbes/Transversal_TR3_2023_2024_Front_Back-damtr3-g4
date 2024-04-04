@@ -3,15 +3,25 @@
     <main>
         <div class="container-broadcast">
             <div class="row">
-                <div v-for="phrase in phrases" cols="12" md="4">
+                <div v-for="(phrase, index) in phrases" cols="12" md="4">
                     <div class="cardSettings">
                         <div>
                             <div class="container-phrase">
-                                <h2>{{ phrase.message }}</h2>
+                                <!-- Mostrar el texto si no estamos editando esta frase -->
+                                <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
+                                <!-- Mostrar el campo de entrada si estamos editando esta frase -->
+                                <input v-else v-model="editedPhrase" type="text">
                             </div>
                             <div>
-                                <button class="edit-button">Editar</button>
-                                <button class="delet-button">Eliminar</button>
+                                <!-- Pasa el índice de la frase al método openModal -->
+                                <button v-if="editingPhraseIndex == null" class="edit-button"
+                                    @click="openModal(index)">Editar</button>
+                                <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
+                                <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
+                                <button v-if="editingPhraseIndex === index" class="edit-button"
+                                    @click="saveEditedPhrase(phrase._id)">Guardar</button>
+                                <button v-if="editingPhraseIndex === index" class="edit-button"
+                                    @click="closeModal()">Cancelar</button>
                             </div>
                         </div>
                     </div>
@@ -64,7 +74,7 @@
 </template>
 <script>
 import Navigation from '~/layouts/Navigation.vue';
-import { getBroadcast, getAudios, sendAudio, procesOdoo } from '~/services/communicationManager';
+import { getBroadcast, getAudios, sendAudio, procesOdoo, editMessage } from '~/services/communicationManager';
 export default {
     components: {
         Navigation,
@@ -77,7 +87,9 @@ export default {
             battleAudios: [], // Array para audios de batalla
             selectedMenuAudio: [], // Audio del menú seleccionado
             selectedBattleAudio: [], // Audio de batalla seleccionado
-            isActive: false
+            isActive: false,
+            editingPhraseIndex: null,
+            editedPhrase: ''
         }
     },
     async created() {
@@ -94,19 +106,35 @@ export default {
         async selectMenuAudio(audio) {
             this.selectedMenuAudio = audio;
             console.log(audio);
-            const res = await sendAudio(audio);
+            const res = await sendAudio({ audioUrl: audio });
             console.log(res);
         },
         // Método para cambiar la selección del audio de batalla
         async selectBattleAudio(audio) {
             this.selectedBattleAudio = audio;
             console.log(audio);
-            const res = await sendAudio(audio);
+            const res = await sendAudio({ audioUrl: audio });
             console.log(res);
         },
-        async statusOdoo(isActive){
+        async statusOdoo(isActive) {
             const proces = await procesOdoo(isActive);
             console.log(isActive);
+        },
+        openModal(index) {
+            // Establece el índice de la frase que se está editando
+            this.editingPhraseIndex = index;
+            // Copia el texto actual de la frase al campo de entrada
+            this.editedPhrase = this.phrases[index].message;
+        },
+        async saveEditedPhrase(id) {
+        console.log(id);
+        // Actualiza el mensaje de la frase con el texto editado
+        const update = await editMessage(id, this.editedPhrase);
+        this.editedPhrase = '';
+        this.closeModal();
+        },
+        closeModal(){
+        this.editingPhraseIndex = null;
         }
     }
 
@@ -268,75 +296,80 @@ main {
 }
 
 .buttons-odoo {
-  display: flex;
-  flex-direction: column;
-  row-gap: 1.5em;
+    display: flex;
+    flex-direction: column;
+    row-gap: 1.5em;
 }
+
 .button_pair {
-  display: flex;
-  column-gap: 1.5em;
+    display: flex;
+    column-gap: 1.5em;
 }
+
 .button_pair1 {
-  display: flex;
-  flex-direction: column;
-  row-gap: 0.9em;
+    display: flex;
+    flex-direction: column;
+    row-gap: 0.9em;
 }
 
 .button3 {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  width: 5.7em;
-  height: 5.7em;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background-color: #d42a02;
-  box-shadow: rgba(0, 0, 0, 0.377) 10px 10px 8px, #fb702c 2px 2px 10px 0px inset,
-    #d42a02 -4px -4px 1px 0px inset;
-  cursor: pointer;
-  font-family: Montserrat;
-  transition: 0.1s ease-in-out;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 5.7em;
+    height: 5.7em;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background-color: #d42a02;
+    box-shadow: rgba(0, 0, 0, 0.377) 10px 10px 8px, #fb702c 2px 2px 10px 0px inset,
+        #d42a02 -4px -4px 1px 0px inset;
+    cursor: pointer;
+    font-family: Montserrat;
+    transition: 0.1s ease-in-out;
 }
+
 .button4 {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  width: 5.7em;
-  height: 5.7em;
-  border-radius: 10px;
-  border: none;
-  outline: none;
-  background-color: #545251;
-  box-shadow: rgba(0, 0, 0, 0.377) 10px 10px 8px,
-    #a8a6a4 1.5px 1.5px 1px 0px inset, #545251 -3.2px -3.2px 8px 0px inset;
-  cursor: pointer;
-  font-family: Montserrat;
-  transition: 0.1s ease-in-out;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    width: 5.7em;
+    height: 5.7em;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background-color: #545251;
+    box-shadow: rgba(0, 0, 0, 0.377) 10px 10px 8px,
+        #a8a6a4 1.5px 1.5px 1px 0px inset, #545251 -3.2px -3.2px 8px 0px inset;
+    cursor: pointer;
+    font-family: Montserrat;
+    transition: 0.1s ease-in-out;
 }
 
 .button_text {
-  color: white;
-  font-family: gaming;
-  padding-top: 0.9em;
-  letter-spacing: 0.075em;
-  font-size: 0.85em;
-  transition: 0.1s ease-in-out;
+    color: white;
+    font-family: gaming;
+    padding-top: 0.9em;
+    letter-spacing: 0.075em;
+    font-size: 0.85em;
+    transition: 0.1s ease-in-out;
 }
 
 .button3:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px, inset 0.5px 0.5px 4px #000000,
-    #d42a02 -3.2px -3.2px 8px 0px inset;
-}
-.button3:active .button_text {
-  transform: translateY(0.5px);
-}
-.button4:active {
-  box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px, inset 0.5px 0.5px 4px #000000,
-    #545251 -3.2px -3.2px 8px 0px inset;
-}
-.button4:active .button_text {
-  transform: translateY(0.5px);
+    box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px, inset 0.5px 0.5px 4px #000000,
+        #d42a02 -3.2px -3.2px 8px 0px inset;
 }
 
+.button3:active .button_text {
+    transform: translateY(0.5px);
+}
+
+.button4:active {
+    box-shadow: rgba(0, 0, 0, 0.377) 0px 0px 0px, inset 0.5px 0.5px 4px #000000,
+        #545251 -3.2px -3.2px 8px 0px inset;
+}
+
+.button4:active .button_text {
+    transform: translateY(0.5px);
+}
 </style>
