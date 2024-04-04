@@ -71,6 +71,17 @@ export async function getBroadcast() {
   return phrase;
 }
 
+export async function editMessage(id, newMessage) {
+  console.log(id,newMessage);
+  const response = await fetch(`http://localhost:3789/updateMessage/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ message: newMessage })
+  });
+}
+
 export async function getAudios() {
   const response = await fetch("http://localhost:3789/audios")
   const audio = await response.json();
@@ -85,7 +96,7 @@ export async function sendAudio(selectedAudio) {
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(selectedAudio)
+    body: JSON.stringify({ audioUrl: selectedAudio })
   });
 }
 
