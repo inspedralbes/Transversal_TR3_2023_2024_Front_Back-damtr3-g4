@@ -1,5 +1,6 @@
 const express = require("express");
 const session = require("express-session");
+
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -31,21 +32,18 @@ const io = new Server(server, {
 });
 
 const {
-  selectUserByMailPass,
-  insertUser,
-  selectUsers,
+    selectUserByMailPass,
+    insertUser,
+    selectUsers,
+    insertGame,
+    insertSkin,
+    selectPlayersInGame,
+    getIdGame,
+    updateUserGameId
 } = require("./dbFunctions");
 
-const {
-  insertData,
-  getData,
-  insertBroadcast,
-  getBroadcast,
-  editMessage,
-} = require("./mongoFuntions");
-
-app.get("/allUsers", async (req, res) => {
-  res.send(await selectUsers());
+app.get("/allUsers", async(req,res)=>{
+    res.send(await selectUsers());
 });
 
 
@@ -75,14 +73,20 @@ app.post("/insertUser", async (req, res) => {
   res.send({ response: "User inserted correctly", userData: user });
 });
 
-app.post("/initGame", async (req, res) => {
-  const { user, idGame } = req.body;
-
-  const newGame = {
-    user,
-    idGame,
-  };
+app.post("/joinGame", async (req, res) => {
+    const dataGameJoin = req.body;
+    console.log(dataGameJoin);
+    const idGame = await updateUserGameId(dataGameJoin.passwordGame, dataGameJoin.idUser);
+    console.log(idGame);
+    res.send({ idGame: idGame[0].id })
 });
+
+app.post("/initGame", async (req, res) => {
+    const dataGame = req.body;
+    const idGame = await insertGame(dataGame.numPlayers, dataGame.state, dataGame.password);
+    console.log(idGame);
+    res.send({ idGame: idGame[0].id, passwordGame: dataGame.password })
+  });
 // MONGO
 app.post("/insertCharacter", async (req, res) => {
   const data = req.body;
@@ -675,37 +679,95 @@ app.post("/migrateUsersToOdoo", async (req, res) => {
   }
 });
 
-// SOCKETS
+
+
+// -------------------------------------------------------- SOCKETS ----------------------------------------
 
 var usersConnected = [];
 
-io.on("connection", async (socket) => {
-  socket.on("login", async () => {
-    console.log("DENTRO DE LOGIN PAGE::    ");
-    usersConnected.push({ socketId: socket, userId: id });
-    usersConnected.forEach((u) => {
-      console.log("USER ID:: ", u.userId);
-      console.log("USER SOCKET:: ", u.socketId.id);
+io.on('connection', function (socket) {
+    console.log("SOCKET::::: ");
+    socket.on("login", async (user) => {
+        let userParseado = JSON.parse(user);
+        usersConnected.push({ socketId: socket, userId: userParseado.id, userName: userParseado.name })
+        console.log("User connected id: " + userParseado.id);
+        console.log("Users: " + usersConnected.length);
     });
-  });
 
-  socket.on("actualizarObjeto", () => {});
 
-  socket.on("disconnect", () => {
-    usersConnected.forEach((u) => {
-      if (u.socketId == socket) {
-        usersConnected.pop(u);
-      }
-      console.log("USER ID:: ", u.userId);
-      console.log("USER SOCKET:: ", u.socketId.id);
+    socket.on("getUsersInGame", async (dataGame) => {
+        const dataParseado = JSON.parse(dataGame);
+        console.log("GET USER IN GAME ID: ", dataParseado.idGame);
+        const usersInGame = await selectPlayersInGame(dataParseado.idGame, dataParseado.state);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            usersInGame.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('usersInGame', usersInGame);
+        });
     });
-  });
 
-  socket.on("initGame", (msg) => {
-    io.emit("initGame", msg);
-  });
+    socket.on("sendMovementUser", async (users) => {
+        console.log("SEND MOVEMENT USER IN GAME");
+        const userParseado = JSON.parse(users);
+        const userDataToSend = userParseado[userParseado.length-1];
+        console.log(userDataToSend);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            userParseado.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+        console.log("---------------------------USERS PARA ENVIAR EMIT-----------------------");
+        usuariosEmit.forEach(element => {
+            console.log(element.userName);
+            console.log(element.userId);
+        });
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('getMovementUser', userDataToSend);
+        });
 
+    });
 
+    socket.on("sendStartGame", async(verifyUsers)=>{
+        console.log("------------------ SEND START GAME ------------------");
+        console.log(verifyUsers);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            verifyUsers.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('getStartGame', verifyUsers);
+        });
+        
+    });
+
+    socket.on("disconnect", () => {
+        usersConnected.forEach(u => {
+            if (u.socketId == socket) {
+                console.log("User disconnected id: " + u.userId);
+                usersConnected.pop(u)
+            }
+        });
+
+        console.log("Users: " + usersConnected.length);
+    });
+
+    socket.on("initGame", (msg) => {
+        io.emit('initGame', msg);
+    });
 });
 
 server.listen(port, () => {
