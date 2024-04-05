@@ -42,6 +42,14 @@ const {
     updateUserGameId
 } = require("./dbFunctions");
 
+const {
+  insertData,
+  getData,
+  insertBroadcast,
+  getBroadcast,
+  editMessage,
+} = require("./mongoFuntions");
+
 app.get("/allUsers", async(req,res)=>{
     res.send(await selectUsers());
 });
