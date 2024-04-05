@@ -8,7 +8,7 @@ const CryptoJS = require("crypto-js");
 const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
-const port = 3788;
+const port = 3789;
 const { Client } = require('ssh2');
 const xmlrpc = require('xmlrpc'); //Se utiliza para establecer la conexión con Odoo
 
@@ -419,7 +419,7 @@ app.post("/ConnectionOdoo", async (req, res) => {
     });
 });
 
-app.post("/migrate", async (req, res) => {
+app.post("/migrateFromMongoToOdoo", async (req, res) => { //EndPoint para migrar los personajes de MongoDb a Odoo
     try {
         const odooCredentials = {
             db: 'GameDataBase',
@@ -427,18 +427,25 @@ app.post("/migrate", async (req, res) => {
             password: 'Dam2023+++'
         };
 
-        // Paso 1: Obtener los datos de MongoDB
+        //Obtener los datos de MongoDB
         const mongoData = await getData();
 
-        // Paso 2: Procesar los datos y realizar la inserción en Odoo
+        //Procesar los datos y realizar la inserción en Odoo
         for (const data of mongoData) {
-            const { name_character, description, price, picture } = data;
+            const { name_character, description, price } = data;
+
+            const imageName = `${name_character}.png`;
+            const imagePath = path.join(__dirname, 'assets', imageName);
+
+            // Leer la imagen como cadena de bytes codificada en base64
+            const imageData = fs.readFileSync(imagePath);
+            const imageBase64 = imageData.toString('base64');
 
             const productData = {
                 name: name_character,
                 description: description,
                 list_price: price,
-                image_1014: picture,
+                image_1920: imageBase64,
             };
 
             // Crear un cliente XML-RPC para Odoo
@@ -481,10 +488,267 @@ app.post("/migrate", async (req, res) => {
             });
         }
 
-        // Paso 3: Enviar respuesta de éxito
+        //Enviar respuesta de éxito
         res.status(200).send("Migración exitosa de MongoDB a Odoo.");
     } catch (error) {
         console.error("Error en la migración:", error);
         res.status(500).send("Error en la migración de MongoDB a Odoo.");
+    }
+});
+
+app.post("/migrateUsersToOdoo", async (req, res) => { //EndPoint para migrar los usuarios de MySql a Odoo
+    try {
+        // Obtener los usuarios de MySQL
+        const usersFromSql = await selectUsers();
+
+        // Mapear los campos de MySQL al modelo de datos de clientes de Odoo
+        const odooClients = usersFromSql.map(user => {
+            return {
+                name: user.usuario, // Nombre del cliente en Odoo
+                email: user.correo, // Correo electrónico del cliente en Odoo
+                
+            };
+        });
+
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                    // Insertar los clientes en Odoo
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'create', [odooClients]], (error, clientIds) => {
+                        if (error) {
+                            console.error('Error al crear los clientes en Odoo:', error);
+                            res.status(500).send('Error al crear los clientes en Odoo');
+                        } else {
+                            console.log('IDs de los nuevos clientes en Odoo:', clientIds);
+
+                            // Obtener los nombres de los nuevos clientes creados en Odoo
+                            objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'read', [clientIds], {fields: ['name']}], (error, newClients) => {
+                                if (error) {
+                                    console.error('Error al obtener los nombres de los nuevos clientes en Odoo:', error);
+                                    res.status(500).send('Error al obtener los nombres de los nuevos clientes en Odoo');
+                                } else {
+                                    console.log('Nombres de los nuevos clientes en Odoo:', newClients.map(client => client.name));
+                                    res.status(200).json(newClients.map(client => client.name));
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error en la migración de usuarios a Odoo:', error);
+        res.status(500).send('Error en la migración de usuarios a Odoo');
+    }
+});
+
+
+app.post("/getOdooClients", async (req, res) => {
+    try {
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                    // Consultar los nombres de los clientes en Odoo
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search_read', [[]], {fields: ['name']}], (error, clients) => {
+                        if (error) {
+                            console.error('Error al consultar los clientes en Odoo:', error);
+                            res.status(500).send('Error al consultar los clientes en Odoo');
+                        } else {
+                            console.log('Nombres de los clientes en Odoo:', clients.map(client => client.name));
+                            res.status(200).json(clients.map(client => client.name));
+                        }
+                    });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener los clientes de Odoo:', error);
+        res.status(500).send('Error al obtener los clientes de Odoo');
+    }
+});
+
+
+app.post("/deleteEmptyClients", async (req, res) => {
+    try {
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                    // Eliminar clientes con campo name vacío
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search', [[['name', '=', '']]]], (error, clientIds) => {
+                        if (error) {
+                            console.error('Error al buscar los clientes con campo name vacío:', error);
+                            res.status(500).send('Error al buscar los clientes con campo name vacío');
+                        } else {
+                            // Eliminar los registros encontrados
+                            objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'unlink', [clientIds]], (error, result) => {
+                                if (error) {
+                                    console.error('Error al eliminar los clientes con campo name vacío:', error);
+                                    res.status(500).send('Error al eliminar los clientes con campo name vacío');
+                                } else {
+                                    console.log('Clientes con campo name vacío eliminados correctamente:', result);
+                                    res.status(200).send('Clientes con campo name vacío eliminados correctamente');
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error al eliminar los clientes con campo name vacío:', error);
+        res.status(500).send('Error al eliminar los clientes con campo name vacío');
+    }
+});
+
+
+app.post("/deleteClientByName", async (req, res) => {
+    try {
+        // Nombre del cliente a eliminar
+        const clientName = req.body.clientName; // Asumiendo que se envía el nombre del cliente en el cuerpo de la solicitud
+
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                    // Buscar el ID del cliente por nombre
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search', [[['name', '=', clientName]]]], (error, clientIds) => {
+                        if (error) {
+                            console.error('Error al buscar el cliente por nombre en Odoo:', error);
+                            res.status(500).send('Error al buscar el cliente por nombre en Odoo');
+                        } else {
+                            if (clientIds.length === 0) {
+                                console.log('No se encontró ningún cliente con el nombre proporcionado.');
+                                res.status(404).send('No se encontró ningún cliente con el nombre proporcionado.');
+                            } else {
+                                // Eliminar el cliente por ID
+                                objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'unlink', [clientIds]], (error, result) => {
+                                    if (error) {
+                                        console.error('Error al eliminar el cliente en Odoo:', error);
+                                        res.status(500).send('Error al eliminar el cliente en Odoo');
+                                    } else {
+                                        console.log('Cliente eliminado correctamente:', clientName);
+                                        res.status(200).send('Cliente eliminado correctamente');
+                                    }
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error al eliminar el cliente en Odoo:', error);
+        res.status(500).send('Error al eliminar el cliente en Odoo');
     }
 });

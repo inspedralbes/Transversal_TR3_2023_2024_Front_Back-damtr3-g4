@@ -62,12 +62,6 @@ function insertUser(name, password, mail){
     });
 }
 
-function insertGame(player1Id, player2Id, result){
-    return new Promise((resolve, reject) => {
-        let con = conectDB();
-        
-    });
-}
 
 function conectDB() {
     let con = mysql.createConnection(dbConfig)
