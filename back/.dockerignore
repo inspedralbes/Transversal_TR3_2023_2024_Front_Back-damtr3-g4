@@ -1,0 +1,5 @@
+#CARPETA PARA IGNORAR CIERTOS MÓDULOS A LA HORA DE GENERAR DOCKER
+#ignoramos node modules
+node_modules
+# y el debug
+npm-debug.log
