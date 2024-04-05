@@ -50,7 +50,7 @@ function selectUserByMailPass(mail, password) {
 function insertUser(name, password, mail){
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "INSERT INTO Usuarios(usuario, contrasenya, correo) VALUES ('" + name + "','" + password + "', '" + mail + "');";
+        var sql = "INSERT INTO Usuario(usuario, contrasenya, correo) VALUES ('" + name + "','" + password + "', '" + mail + "');";
         con.query(sql, function (err, result) {
             if (err) {
                 reject(err);
