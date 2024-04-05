@@ -61,7 +61,8 @@ const {
     insertGame,
     insertSkin,
     selectPlayersInGame,
-    getIdGame
+    getIdGame,
+    updateUserGameId
 } = require("./dbFunctions");
 
 app.get("/allUsers", async (req, res) => {
@@ -94,6 +95,14 @@ app.post("/insertUser", async (req, res) => {
     res.send({ response: "User inserted correctly", userData: user });
 });
 
+app.post("/joinGame", async (req, res) => {
+    const dataGameJoin = req.body;
+    console.log(dataGameJoin);
+    const idGame = await updateUserGameId(dataGameJoin.passwordGame, dataGameJoin.idUser);
+    console.log(idGame);
+    res.send({ idGame: idGame[0].id })
+});
+
 app.post("/initGame", async (req, res) => {
     const dataGame = req.body;
     const idGame = await insertGame(dataGame.numPlayers, dataGame.state, dataGame.password);
@@ -119,12 +128,12 @@ io.on('connection', function (socket) {
 
     socket.on("getUsersInGame", async (dataGame) => {
         const dataParseado = JSON.parse(dataGame);
-        console.log(dataParseado);
-        const usersInGame = await selectPlayersInGame(dataParseado.id, dataParseado.state);
+        console.log("GET USER IN GAME ID: ", dataParseado.idGame);
+        const usersInGame = await selectPlayersInGame(dataParseado.idGame, dataParseado.state);
         var usuariosEmit = [];
         usersConnected.forEach(u => {
             usersInGame.forEach(uBD => {
-                if (uBD.user_id == u.userId) {
+                if (uBD.id == u.userId) {
                     usuariosEmit.push(u);
                 }
             });
@@ -134,6 +143,47 @@ io.on('connection', function (socket) {
         });
     });
 
+    socket.on("sendMovementUser", async (users) => {
+        console.log("SEND MOVEMENT USER IN GAME");
+        const userParseado = JSON.parse(users);
+        const userDataToSend = userParseado[userParseado.length-1];
+        console.log(userDataToSend);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            userParseado.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+        console.log("---------------------------USERS PARA ENVIAR EMIT-----------------------");
+        usuariosEmit.forEach(element => {
+            console.log(element.userName);
+            console.log(element.userId);
+        });
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('getMovementUser', userDataToSend);
+        });
+
+    });
+
+    socket.on("sendStartGame", async(verifyUsers)=>{
+        console.log("------------------ SEND START GAME ------------------");
+        console.log(verifyUsers);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            verifyUsers.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('getStartGame', verifyUsers);
+        });
+        
+    });
 
     socket.on("disconnect", () => {
         usersConnected.forEach(u => {

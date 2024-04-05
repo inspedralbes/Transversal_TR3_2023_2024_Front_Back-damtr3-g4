@@ -9,7 +9,8 @@ module.exports = {
     insertGame,
     insertSkin,
     selectPlayersInGame,
-    getIdGame
+    getIdGame,
+    updateUserGameId
 };
 
 var dbConfig = {
@@ -116,6 +117,40 @@ function selectPlayersInGame(id, state) {
                 reject(err);
             } else {
                 resolve(result);
+            }
+            disconnectDB(con);
+        });
+    });
+}
+
+function selectIdGameByPassword(passwordGame){
+    return new Promise((resolve, reject)=>{
+        let con = conectDB();
+        var sql = "SELECT id FROM Partida WHERE password='"+passwordGame+"'";
+
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+            disconnectDB(con);
+        });
+    });
+}
+
+function updateUserGameId(passwordGame, idUser){
+    return new Promise((resolve, reject)=>{
+        let con = conectDB();
+        var sql = "UPDATE Usuario SET id_partida=(SELECT Partida.id FROM Partida WHERE Partida.password='"+passwordGame+"') WHERE Usuario.id="+ idUser +";";
+
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                selectIdGameByPassword(passwordGame).then((data)=>{
+                    resolve(data);
+                });
             }
             disconnectDB(con);
         });
