@@ -90,11 +90,12 @@ export default {
 }
 
 .card-image {
-    max-width: 80%;
+    max-width: 70%;
     max-height: 80%;
+    object-fit: cover;
     border-radius: 17px 17px 0 0;
     object-fit: cover;
-
+    aspect-ratio: 2/3;
 }
 
 .container-buttons {
