@@ -48,12 +48,6 @@ app.get("/allUsers", async (req, res) => {
   res.send(await selectUsers());
 });
 
-app.options('*', (req, res) => {
-    res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.set('Access-Control-Allow-Headers', 'Content-Type');
-    res.sendStatus(200);
-  });
 
 app.post("/authoritzationLogin", async (req, res) => {
   console.log("POST :::: authoritzationLogin");
@@ -124,6 +118,28 @@ app.post("/selectCharacter/:id", async (req, res) => {
 
     console.log("El archivo existe:", nameFile, isActive);
   });
+});
+
+// Con esta funcion manda todos los sprites para android
+app.get("/getAllCharacters", async (req, res) =>{
+
+  try {
+      // Leer el contenido del directorio
+      const files = await fs.promises.readdir(routeImg);
+
+      // Filtrar solo los archivos de imagen (asumiendo que solo quieres archivos con extensiones jpg, png y gif)
+      const imageFiles = files.filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.gif';
+      });
+
+      // Enviar la lista de archivos de imagen como respuesta
+      res.json({ imageFiles });
+  } catch (error) {
+      // Manejar errores
+      console.error('Error al leer el directorio:', error);
+      res.status(500).json({ error: 'Ocurrió un error al obtener los archivos.' });
+  }
 });
 
 app.post("/insertMessage", async (req, res) => {
