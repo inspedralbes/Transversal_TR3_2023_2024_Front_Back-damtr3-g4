@@ -118,6 +118,7 @@ app.get("/getData", async (req, res) => {
 app.post("/selectCharacter/:id", async (req, res) => {
   const id = req.params.id;
   const isActive = req.body.isActive;
+  console.log(req.body);
   console.log("ID::::" + id);
   const nameFile = id + ".png";
   const routeFile = path.join(routeImg, nameFile);
@@ -718,6 +719,15 @@ io.on('connection', function (socket) {
         usuariosEmit.forEach(u => {
             u.socketId.emit('usersInGame', usersInGame);
         });
+    });
+
+    socket.on('getData', async () => {
+      try {
+        const data = await getData();
+        socket.emit('dataResponse', data);
+      } catch (err) {
+        console.log(err.message);
+      }
     });
 
     socket.on("sendMovementUser", async (users) => {

@@ -73,7 +73,7 @@ export default {
       try {
         const insert = await insertUser(username.value, mail.value, password.value);
         console.log(insert);
-        username=""
+        username = ""
       } catch (error) {
         console.error("Error al iniciar sesión:", error);
       }
@@ -87,7 +87,7 @@ export default {
       registerForm,
       loginStore: computed(() => useAppStore())
     };
-  }
+  },
 }
 </script>
 <style>

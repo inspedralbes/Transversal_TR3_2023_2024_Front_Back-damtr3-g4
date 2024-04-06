@@ -74,6 +74,8 @@
 </template>
 <script>
 import Navigation from '~/layouts/Navigation.vue';
+import { useAppStore } from '@/store/loginStore';
+import { useRouter } from 'vue-router';
 import { getBroadcast, getAudios, sendAudio, procesOdoo, editMessage } from '~/services/communicationManager';
 export default {
     components: {
@@ -90,6 +92,15 @@ export default {
             isActive: false,
             editingPhraseIndex: null,
             editedPhrase: ''
+        }
+    },
+    mounted() {
+        const loginStore = useAppStore();
+        const router = useRouter();
+
+        if (!loginStore.isLoggedIn()) {
+            router.push('/');
+            alert("Debes iniciar sessión!")
         }
     },
     async created() {
