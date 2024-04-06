@@ -36,6 +36,10 @@ const {
     getData,
 } = require("./mongoFuntions");
 
+const {
+    getOdooClients,
+} = require("./OdooFuntions");
+
 app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
 });
@@ -76,7 +80,7 @@ app.post("/insertUser", async (req, res) => {
 
 });
 
-app.post("/insertUser", async (req, res) => {
+app.post("/insertUserToOddo", async (req, res) => { //EndPoint Para insertar un usuario a Sql y como cliente a Odoo
     try {
         const user = req.body;
         console.log(req.body);
@@ -150,6 +154,83 @@ app.post("/insertUser", async (req, res) => {
         res.status(500).send('Error al insertar usuario y migrarlo a Odoo');
     }
 });
+
+app.post("/syncUsersToOdoo", async (req, res) => { //EndPoint para verificar si hay algún usuario en Sql que no existe aún en Odoo como cliente
+    try {
+        // Obtener los usuarios de MySQL
+        const usersFromSql = await selectUsers();
+        console.log("Usuarios de MySQL:", usersFromSql);
+
+        // Obtener los clientes de Odoo
+        const odooClients = await getOdooClients();
+        console.log("Clientes de Odoo:", odooClients);
+
+        // Filtrar usuarios que no están en Odoo
+        const usersToAdd = usersFromSql.filter(user => !odooClients.some(client => client.name === user.usuario && client.email === user.correo));
+        console.log("Usuarios a agregar en Odoo:", usersToAdd);
+
+        if (usersToAdd.length === 0) {
+            res.send({ response: "No new users to add to Odoo" });
+            return;
+        }
+
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                    // Insertar los nuevos clientes en Odoo
+                    const newClientIds = [];
+                    usersToAdd.forEach(user => {
+                        const odooClient = {
+                            name: user.usuario,
+                            email: user.correo
+                        };
+                        objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'create', [odooClient]], (error, clientId) => {
+                            if (error) {
+                                console.error('Error al crear el cliente en Odoo:', error);
+                            } else {
+                                console.log('ID del nuevo cliente en Odoo:', clientId);
+                                newClientIds.push(clientId);
+                            }
+                        });
+                    });
+                    res.send({ response: "New users added to Odoo", newClientIds: newClientIds });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error al sincronizar usuarios con Odoo:', error);
+        res.status(500).send('Error al sincronizar usuarios con Odoo');
+    }
+});
+
 
 // MONGO 
 app.post("/insertCharacter", async (req, res) => {
@@ -571,79 +652,6 @@ app.post("/migrateFromMongoToOdoo", async (req, res) => { //EndPoint para migrar
     }
 });
 
-app.post("/migrateUsersToOdoo", async (req, res) => { //EndPoint para migrar los usuarios de MySql a Odoo
-    try {
-        // Obtener los usuarios de MySQL
-        const usersFromSql = await selectUsers();
-
-        // Mapear los campos de MySQL al modelo de datos de clientes de Odoo
-        const odooClients = usersFromSql.map(user => {
-            return {
-                name: user.usuario, // Nombre del cliente en Odoo
-                email: user.correo, // Correo electrónico del cliente en Odoo
-                
-            };
-        });
-
-        // Conectar con Odoo
-        const odooCredentials = {
-            db: 'GameDataBase',
-            user: 'a22jonorevel@inspedralbes.cat',
-            password: 'Dam2023+++'
-        };
-
-        const clientOptions = {
-            host: '141.147.16.21',
-            port: 8069,
-            path: '/xmlrpc/2/common'
-        };
-        const client = xmlrpc.createClient(clientOptions);
-
-        // Autenticar en Odoo
-        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
-            if (error) {
-                console.error('Error en la autenticación con Odoo:', error);
-                res.status(500).send('Error en la autenticación con Odoo');
-            } else {
-                if (uid > 0) {
-                    const objectClientOptions = {
-                        host: '141.147.16.21',
-                        port: 8069,
-                        path: '/xmlrpc/2/object'
-                    };
-                    const objectClient = xmlrpc.createClient(objectClientOptions);
-
-                    // Insertar los clientes en Odoo
-                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'create', [odooClients]], (error, clientIds) => {
-                        if (error) {
-                            console.error('Error al crear los clientes en Odoo:', error);
-                            res.status(500).send('Error al crear los clientes en Odoo');
-                        } else {
-                            console.log('IDs de los nuevos clientes en Odoo:', clientIds);
-
-                            // Obtener los nombres de los nuevos clientes creados en Odoo
-                            objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'read', [clientIds], {fields: ['name']}], (error, newClients) => {
-                                if (error) {
-                                    console.error('Error al obtener los nombres de los nuevos clientes en Odoo:', error);
-                                    res.status(500).send('Error al obtener los nombres de los nuevos clientes en Odoo');
-                                } else {
-                                    console.log('Nombres de los nuevos clientes en Odoo:', newClients.map(client => client.name));
-                                    res.status(200).json(newClients.map(client => client.name));
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    console.log('Autenticación fallida con Odoo.');
-                    res.status(401).send('Autenticación fallida con Odoo');
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error en la migración de usuarios a Odoo:', error);
-        res.status(500).send('Error en la migración de usuarios a Odoo');
-    }
-});
 
 
 app.post("/getOdooClients", async (req, res) => {
