@@ -110,7 +110,7 @@ function getIdGame(password){
 function selectPlayersInGame(id, state) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "SELECT Usuario.id, Usuario.usuario, Usuario.correo FROM Usuario JOIN Partida ON Usuario.id_partida = Partida.id WHERE Partida.id = '"+ id +"' AND Partida.estado = '"+ state +"'; ";
+        var sql = "SELECT Usuario.id, Usuario.usuario, Usuario.correo, Usuario.skin FROM Usuario JOIN Partida ON Usuario.id_partida = Partida.id WHERE Partida.id = '"+ id +"' AND Partida.estado = '"+ state +"'; ";
 
         con.query(sql, function (err, result) {
             if (err) {

@@ -48,6 +48,10 @@ const {
   insertBroadcast,
   getBroadcast,
   editMessage,
+  insertUserCharacter,
+  updateUserCharacter,
+  getSkinsByIdUser,
+  getDataSkinByIdSkin
 } = require("./mongoFuntions");
 
 app.get("/allUsers", async(req,res)=>{
@@ -96,6 +100,30 @@ app.post("/initGame", async (req, res) => {
     res.send({ idGame: idGame[0].id, passwordGame: dataGame.password })
   });
 // MONGO
+app.post("/inserUserCharacter", async(req,res)=>{
+  const data = req.body;
+  await insertUserCharacter(data.idUser);
+  res.send({result: "Do correct insert"})
+});
+
+app.post("/updateUserCharacter", async(req,res)=>{
+  const data = req.body;
+  const result = await updateUserCharacter(data.idUser, data.idSkin);
+  res.send({result: result})
+})
+
+app.post("/getSkinsByUser", async(req, res)=>{
+  const data = req.body;
+  const result = await getSkinsByIdUser(data.idUser);
+  res.send({result: result})
+});
+
+app.post("/getSkinById", async(req, res)=>{
+  const data = req.body;
+  const result = await getDataSkinByIdSkin(data.idSkin);
+  res.send({result: result});
+});
+
 app.post("/insertCharacter", async (req, res) => {
   const data = req.body;
   const result = await insertData(
@@ -153,6 +181,7 @@ app.get("/getAllCharacters", async (req, res) =>{
       res.status(500).json({ error: 'Ocurrió un error al obtener los archivos.' });
   }
 });
+
 
 app.post("/insertMessage", async (req, res) => {
   const data = req.body;
