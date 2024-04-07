@@ -26,7 +26,6 @@
 <script>
 import Navigation from '~/layouts/Navigation.vue';
 import { getData, selectCharacter } from '~/services/communicationManager';
-import socketManager from '~/services/socket';
 
 export default {
     components: {
@@ -37,18 +36,16 @@ export default {
             personatges: [],
         }
     },
-    created() {
-        // Conectar al servidor de sockets al cargar el componente
-        socketManager.connect();
-
-        // Escuchar el evento 'updateData' para actualizar los personajes
-        // Ejemplo: this.$on('updateData', (data) => { this.personatges = data; });
+    async created() {
+        this.personatges = await getData();
+        console.log(this.personatges)
     },
     methods: {
         async changeStatus(personatge) {
+            
             personatge.isActive = !personatge.isActive;
-            socketManager.selectCharacter(personatge._id, personatge.isActive);
-        }
+                await selectCharacter(personatge._id, personatge.isActive);
+            },
     }
 }
 </script>

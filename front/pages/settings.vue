@@ -1,5 +1,7 @@
 <template>
-    <Navigation />
+    <div>
+        <Navigation />
+    </div>
     <main>
         <div class="container-broadcast">
             <div class="row">
@@ -77,6 +79,7 @@ import Navigation from '~/layouts/Navigation.vue';
 import { useAppStore } from '@/store/loginStore';
 import { useRouter } from 'vue-router';
 import { getBroadcast, getAudios, sendAudio, procesOdoo, editMessage } from '~/services/communicationManager';
+import io from "socket.io-client";
 export default {
     components: {
         Navigation,
@@ -94,6 +97,17 @@ export default {
             editedPhrase: ''
         }
     },
+    // created() {
+    // this.socket = io("http://localhost:3789"); // Ajusta la URL según tu configuración
+
+    // // Escuchar para recibir datos de broadcast
+    // this.socket.on("broadcastData", (data) => {
+    //   this.phrases = data;
+    // });
+
+    // // Solicitar datos de broadcast al servidor cuando el componente se crea
+    // this.socket.emit("getBroadcast");
+    // },
     mounted() {
         const loginStore = useAppStore();
         const router = useRouter();
@@ -155,9 +169,7 @@ export default {
 main {
     display: flex;
     flex-direction: column;
-    /* Cambiar la dirección del contenedor principal a columna */
     align-items: center;
-    /* Alinear los elementos horizontalmente en el centro */
 }
 
 .container-broadcast {

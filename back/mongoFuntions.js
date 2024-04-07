@@ -76,7 +76,7 @@ async function getBroadcast(){
 
 async function editMessage(id, newMessage) {
   try {
-
+    console.log(id, newMessage);
     await client.connect();
     const database = client.db(dbName);
     const collection = database.collection(collectionName2);

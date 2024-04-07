@@ -173,16 +173,15 @@ app.get("/getBroadcast", async (req, res) => {
 
 // Define la ruta para actualizar un mensaje
 app.put('/updateMessage/:id', async (req, res) => {
+  console.log("entre");
   const id = req.params.id;
   const message = req.body;
-
+  console.log(id, message.message);
   try {
     if (!message) {
       throw new Error('Se requiere un nuevo mensaje.');
     }
-
     const result = await editMessage(id, message.message); // Editar el mensaje
-    io.emit('messageUpdated', { id, message: message.message }); // Emitir un evento a todos los clientes conectados
     res.send({ message: 'Mensaje actualizado correctamente.' });
   } catch (error) {
     console.log(error.message);
@@ -703,6 +702,14 @@ io.on('connection', function (socket) {
         console.log("Users: " + usersConnected.length);
     });
 
+    // socket.on("getBroadcast", async () => {
+    //   try {
+    //     const data = await getBroadcast();
+    //     socket.emit("broadcastData", data);
+    //   } catch (err) {
+    //     console.log(err.message);
+    //   }
+    // });
 
     socket.on("getUsersInGame", async (dataGame) => {
         const dataParseado = JSON.parse(dataGame);
@@ -719,15 +726,6 @@ io.on('connection', function (socket) {
         usuariosEmit.forEach(u => {
             u.socketId.emit('usersInGame', usersInGame);
         });
-    });
-
-    socket.on('getData', async () => {
-      try {
-        const data = await getData();
-        socket.emit('dataResponse', data);
-      } catch (err) {
-        console.log(err.message);
-      }
     });
 
     socket.on("sendMovementUser", async (users) => {
