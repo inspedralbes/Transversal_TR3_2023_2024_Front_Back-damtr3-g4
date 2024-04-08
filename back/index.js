@@ -20,6 +20,8 @@ app.use(bodyParser.json());
 // Servir archivos estáticos desde la carpeta 'assets'
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 const routeImg = path.join(__dirname, "assetsForAndroid");
+app.use("/assetsForAndroid", express.static(routeImg));
+
 // Ruta donde se encuentran los archivos de audio
 const audioFolder = path.join(__dirname, "music");
 app.use("/audio", express.static(audioFolder));
@@ -773,6 +775,7 @@ io.on('connection', function (socket) {
 
     });
 
+    
     socket.on("sendStartGame", async(verifyUsers)=>{
         console.log("------------------ SEND START GAME ------------------");
         console.log(verifyUsers);
@@ -802,9 +805,6 @@ io.on('connection', function (socket) {
         console.log("Users: " + usersConnected.length);
     });
 
-    socket.on("initGame", (msg) => {
-        io.emit('initGame', msg);
-    });
 });
 
 server.listen(port, () => {
