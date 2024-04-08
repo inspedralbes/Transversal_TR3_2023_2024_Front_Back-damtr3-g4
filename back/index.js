@@ -11,6 +11,8 @@ const server = http.createServer(app);
 const port = 3789;
 const { Client } = require('ssh2');
 const xmlrpc = require('xmlrpc'); //Se utiliza para establecer la conexión con Odoo
+const nodemailer = require('nodemailer');
+
 
 app.use(express.json());
 app.use(cors());
@@ -42,6 +44,86 @@ const {
 
 app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
+});
+
+app.post("/sendInvoicesByEmail", async (req, res) => {
+    try {
+        // Credenciales de Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        // Cliente XML-RPC para conectar con Odoo
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/object'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticación en Odoo y obtención de facturas y correos electrónicos
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], async (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                try {
+                    // Consulta para obtener las facturas y direcciones de correo electrónico de los clientes
+                    const clients = await new Promise((resolve, reject) => {
+                        client.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search_read', [[]], { fields: ['name', 'email'] }], (error, clients) => {
+                            if (error) {
+                                reject(error);
+                            } else {
+                                resolve(clients);
+                            }
+                        });
+                    });
+
+                    // Configuración del transporte de correo electrónico
+                    const transporter = nodemailer.createTransport({
+                        service: 'Gmail',
+                        auth: {
+                            user: 'a22jonorevel@inspedralbes.cat', // Reemplazar con tu dirección de correo electrónico
+                            pass: 'Dam2023+++' // Reemplazar con tu contraseña de correo electrónico
+                        }
+                    });
+
+                    // Envío de correos electrónicos con las facturas adjuntas
+                    for (const client of clients) {
+                        const mailOptions = {
+                            from: 'a22jonorevel@inspedralbes.cat', // Reemplazar con tu dirección de correo electrónico
+                            to: client.email,
+                            subject: 'Factura de tu compra',
+                            text: 'Adjuntamos la factura de tu compra.',
+                            attachments: [{
+                                filename: 'factura.pdf', // Nombre de la factura
+                                path: '/ruta/a/tu/factura.pdf' // Ruta a la factura en tu sistema de archivos
+                            }]
+                        };
+
+                        // Envío del correo electrónico
+                        transporter.sendMail(mailOptions, (error, info) => {
+                            if (error) {
+                                console.error('Error al enviar el correo electrónico:', error);
+                            } else {
+                                console.log('Correo electrónico enviado:', info.response);
+                            }
+                        });
+                    }
+
+                    res.status(200).send('Correos electrónicos enviados correctamente');
+                } catch (error) {
+                    console.error('Error al obtener las facturas y correos electrónicos de Odoo:', error);
+                    res.status(500).send('Error al obtener las facturas y correos electrónicos de Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error en el endPoint:', error);
+        res.status(500).send('Error en el endPoint');
+    }
 });
 
 app.post("/authoritzationLogin", async (req, res) => {

@@ -18,7 +18,7 @@ const data = await response.json();
 return { ...data};
 }
 export async function insertUser(name, mail, password){
-const response = await fetch("http://localhost:3789/insertUser", {
+const response = await fetch("http://localhost:3789/insertUserToOddo", {
 method: "POST",
 headers: {
   "Content-Type": "application/json",
