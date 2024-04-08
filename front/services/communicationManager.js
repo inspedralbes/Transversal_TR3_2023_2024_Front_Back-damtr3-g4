@@ -18,7 +18,7 @@ export async function authoritzationLogin(mail, password) {
   return { ...data };
 }
 export async function insertUser(name, mail, password) {
-  const response = await fetch("http://localhost:3789/insertUser", {
+  const response = await fetch("http://localhost:3789/insertUserToOddo", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -116,6 +116,22 @@ export async function procesOdoo(isActive) {
     // Manejar el error según sea necesario
     throw error;
   }
+}
+
+export async function syncOdoo() {
+  try{
+    await fetch(`http://localhost:3789/syncUsersToOdoo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+    })
+  } catch (error) {
+    console.error('Error:', error);
+    // Manejar el error según sea necesario
+    throw error;
+  }
+  
 }
 
 

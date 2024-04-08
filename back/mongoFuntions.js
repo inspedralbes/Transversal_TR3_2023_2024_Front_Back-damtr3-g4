@@ -1,4 +1,5 @@
 const { MongoClient } = require("mongodb");
+const { ObjectId } = require("mongodb");
 // 
 const url =
   "mongodb://a22martiptai:Dam2023@ac-loawaxe-shard-00-00.oadcs7f.mongodb.net:27017,ac-loawaxe-shard-00-01.oadcs7f.mongodb.net:27017,ac-loawaxe-shard-00-02.oadcs7f.mongodb.net:27017/?replicaSet=atlas-llm4yv-shard-0&ssl=true&authSource=admin";
@@ -80,10 +81,15 @@ async function editMessage(id, newMessage) {
     await client.connect();
     const database = client.db(dbName);
     const collection = database.collection(collectionName2);
+
+    // Convertir el id en ObjectId
+    const objectId = new ObjectId(id);
+
     const result = await collection.updateOne(
-      { _id: id },
+      { _id: objectId },
       { $set: { message: newMessage } }
     );
+   
     return result;
   } catch(err) {
     console.log(err.message);

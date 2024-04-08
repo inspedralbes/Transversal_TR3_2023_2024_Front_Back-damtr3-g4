@@ -5,25 +5,27 @@
     <main>
         <div class="container-broadcast">
             <div class="row">
-                <div v-for="(phrase, index) in phrases" cols="12" md="4">
-                    <div class="cardSettings">
-                        <div>
-                            <div class="container-phrase">
-                                <!-- Mostrar el texto si no estamos editando esta frase -->
-                                <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
-                                <!-- Mostrar el campo de entrada si estamos editando esta frase -->
-                                <input v-else v-model="editedPhrase" type="text">
-                            </div>
+                <div v-for="personatge in personatges" cols="12" md="4">
+                    <div v-for="(phrase, index) in phrases" cols="12" md="4">
+                        <div class="cardSettings">
                             <div>
-                                <!-- Pasa el índice de la frase al método openModal -->
-                                <button v-if="editingPhraseIndex == null" class="edit-button"
-                                    @click="openModal(index)">Editar</button>
-                                <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
-                                <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
-                                <button v-if="editingPhraseIndex === index" class="edit-button"
-                                    @click="saveEditedPhrase(phrase._id)">Guardar</button>
-                                <button v-if="editingPhraseIndex === index" class="edit-button"
-                                    @click="closeModal()">Cancelar</button>
+                                <div class="container-phrase">
+                                    <!-- Mostrar el texto si no estamos editando esta frase -->
+                                    <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
+                                    <!-- Mostrar el campo de entrada si estamos editando esta frase -->
+                                    <input v-else v-model="editedPhrase" type="text">
+                                </div>
+                                <div>
+                                    <!-- Pasa el índice de la frase al método openModal -->
+                                    <button v-if="editingPhraseIndex == null" class="edit-button"
+                                        @click="openModal(index)">Editar</button>
+                                    <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
+                                    <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
+                                    <button v-if="editingPhraseIndex === index" class="edit-button"
+                                        @click="saveEditedPhrase(phrase._id)">Guardar</button>
+                                    <button v-if="editingPhraseIndex === index" class="edit-button"
+                                        @click="closeModal()">Cancelar</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -69,6 +71,11 @@
                             <span class="button_text">STOP</span>
                         </button>
                     </div>
+                    <div class="btn">
+                        <button class="button4" @click="updateUser()">
+                            <span class="button_text">SYNCOdoo</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,8 +85,8 @@
 import Navigation from '~/layouts/Navigation.vue';
 import { useAppStore } from '@/store/loginStore';
 import { useRouter } from 'vue-router';
-import { getBroadcast, getAudios, sendAudio, procesOdoo, editMessage } from '~/services/communicationManager';
-import io from "socket.io-client";
+import { getData,getBroadcast, getAudios, sendAudio, procesOdoo, editMessage, syncOdoo } from '~/services/communicationManager';
+
 export default {
     components: {
         Navigation,
@@ -87,6 +94,7 @@ export default {
 
     data() {
         return {
+            personatges: [],
             phrases: [],
             menuAudios: [], // Array para audios del menú
             battleAudios: [], // Array para audios de batalla
@@ -97,17 +105,7 @@ export default {
             editedPhrase: ''
         }
     },
-    // created() {
-    // this.socket = io("http://localhost:3789"); // Ajusta la URL según tu configuración
 
-    // // Escuchar para recibir datos de broadcast
-    // this.socket.on("broadcastData", (data) => {
-    //   this.phrases = data;
-    // });
-
-    // // Solicitar datos de broadcast al servidor cuando el componente se crea
-    // this.socket.emit("getBroadcast");
-    // },
     mounted() {
         const loginStore = useAppStore();
         const router = useRouter();
@@ -118,6 +116,8 @@ export default {
         }
     },
     async created() {
+        this.personatges = await getData();
+        console.log(this.personatges)
         this.phrases = await getBroadcast();
         console.log(this.phrases)
         const audios = await getAudios();
@@ -152,14 +152,17 @@ export default {
             this.editedPhrase = this.phrases[index].message;
         },
         async saveEditedPhrase(id) {
-        console.log(id);
-        // Actualiza el mensaje de la frase con el texto editado
-        const update = await editMessage(id, this.editedPhrase);
-        this.editedPhrase = '';
-        this.closeModal();
+            console.log(id);
+            // Actualiza el mensaje de la frase con el texto editado
+            const update = await editMessage(id ,this.editedPhrase);
+            this.editedPhrase = '';
+            this.closeModal();
         },
-        closeModal(){
-        this.editingPhraseIndex = null;
+        closeModal() {
+            this.editingPhraseIndex = null;
+        },
+        async updateUser() {
+            const proces = await syncOdoo();
         }
     }
 
