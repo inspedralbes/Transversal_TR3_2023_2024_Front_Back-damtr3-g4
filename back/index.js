@@ -40,10 +40,51 @@ const {
 
 const {
     getOdooClients,
+    createSaleOrderInOdoo,
+    getProductInfo,
+    insertUserToOdoo,
 } = require("./OdooFuntions");
 
 app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
+});
+
+app.post('/getOdooClients', async (req, res) => {
+    try {
+        const clients = await getOdooClients();
+        res.status(200).json(clients);
+    } catch (error) {
+        console.error('Error al obtener los clientes de Odoo:', error);
+        res.status(500).send('Error al obtener los clientes de Odoo');
+    }
+});
+
+app.post("/createSaleOrder", async (req, res) => {
+    const { productId, partnerId } = req.body;
+
+    if (!productId || !partnerId) {
+        res.status(400).send('Se requieren los IDs de producto y cliente');
+        return;
+    }
+
+    try {
+        const saleOrderId = await createSaleOrderInOdoo(productId, partnerId);
+        console.log(saleOrderId);
+        res.status(200).json({ saleOrderId });
+    } catch (error) {
+        console.error('Error al crear la orden de venta:', error);
+        res.status(500).send('Error al crear la orden de venta en Odoo');
+    }
+});
+
+app.post("/getProductInfo", async (req, res) => {
+    try {
+        const productList = await getProductInfo();
+        res.status(200).json(productList);
+    } catch (error) {
+        console.error('Error al obtener la lista de productos:', error);
+        res.status(500).send('Error al obtener la lista de productos');
+    }
 });
 
 
@@ -83,7 +124,7 @@ app.post("/insertUser", async (req, res) => {
 
 });
 
-app.post("/insertUserToOddo", async (req, res) => { //EndPoint Para insertar un usuario a Sql y como cliente a Odoo
+app.post("/insertUserToOddo", async (req, res) => {
     try {
         const user = req.body;
         console.log(req.body);
@@ -100,57 +141,10 @@ app.post("/insertUserToOddo", async (req, res) => { //EndPoint Para insertar un 
             user.password = doCryptMD5Hash(req.body.password);
             await insertUser(user.name, user.password, user.mail);
 
-            // Mapear los campos del nuevo usuario al modelo de datos de clientes de Odoo
-            const odooClient = {
-                name: user.name, // Nombre del cliente en Odoo
-                email: user.mail, // Correo electrónico del cliente en Odoo
-                // Puedes mapear otros campos según sea necesario
-            };
+            // Insertar el nuevo cliente en Odoo
+            const clientId = await insertUserToOdoo(user);
 
-            // Conectar con Odoo
-            const odooCredentials = {
-                db: 'GameDataBase',
-                user: 'a22jonorevel@inspedralbes.cat',
-                password: 'Dam2023+++'
-            };
-
-            const clientOptions = {
-                host: '141.147.16.21',
-                port: 8069,
-                path: '/xmlrpc/2/common'
-            };
-            const client = xmlrpc.createClient(clientOptions);
-
-            // Autenticar en Odoo
-            client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
-                if (error) {
-                    console.error('Error en la autenticación con Odoo:', error);
-                    res.status(500).send('Error en la autenticación con Odoo');
-                } else {
-                    if (uid > 0) {
-                        const objectClientOptions = {
-                            host: '141.147.16.21',
-                            port: 8069,
-                            path: '/xmlrpc/2/object'
-                        };
-                        const objectClient = xmlrpc.createClient(objectClientOptions);
-
-                        // Insertar el nuevo cliente en Odoo
-                        objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'create', [odooClient]], (error, clientId) => {
-                            if (error) {
-                                console.error('Error al crear el cliente en Odoo:', error);
-                                res.status(500).send('Error al crear el cliente en Odoo');
-                            } else {
-                                console.log('ID del nuevo cliente en Odoo:', clientId);
-                                res.send({ response: "User inserted correctly and migrated to Odoo", userData: user });
-                            }
-                        });
-                    } else {
-                        console.log('Autenticación fallida con Odoo.');
-                        res.status(401).send('Autenticación fallida con Odoo');
-                    }
-                }
-            });
+            res.send({ response: "User inserted correctly and migrated to Odoo", userData: user });
         }
     } catch (error) {
         console.error('Error al insertar usuario y migrarlo a Odoo:', error);
@@ -652,71 +646,5 @@ app.post("/migrateFromMongoToOdoo", async (req, res) => { //EndPoint para migrar
     } catch (error) {
         console.error("Error en la migración:", error);
         res.status(500).send("Error en la migración de MongoDB a Odoo.");
-    }
-});
-
-
-async function sendInvoicesAutomatically() {
-    try {
-        // Establecer conexión con Odoo
-        const odooClient = xmlrpc.createClient({
-            host: '141.147.16.21',
-            port: 8069,
-            path: '/xmlrpc/2/object'
-        });
-
-        // Crear la actividad planificada
-        const activityData = {
-            model: 'mail.activity.plan',
-            method: 'create',
-            args: [{
-                activity_type_id: 1, // ID del tipo de actividad (puedes obtenerlo de tu instancia de Odoo)
-                summary: 'Enviar factura',
-                note: 'Adjuntamos la factura de tu compra.',
-                email_from: 'a22jonorevel@inspedralbes.cat',
-                email_to: 'a22jonorevel@inspedralbes.cat',
-                date_deadline: '2024-04-10 00:00:00', // Fecha y hora de ejecución de la actividad
-                state: 'planned', // Estado de la actividad
-                user_id: 1, // ID del usuario responsable de la actividad (puedes obtenerlo de tu instancia de Odoo)
-                // Otros campos necesarios para la actividad planificada
-            }]
-        };
-
-        // Llamada a la API XML-RPC para crear la actividad planificada
-        const result = await new Promise((resolve, reject) => {
-            odooClient.methodCall('execute_kw', ['GameDataBase', 1, 'Dam2023+++', 'execute', activityData], (error, value) => {
-                if (error) {
-                    reject(error);
-                } else {
-                    resolve(value);
-                }
-            });
-        });
-
-        console.log('Actividad planificada creada:', result);
-    } catch (error) {
-        console.error('Error al enviar la factura automáticamente:', error);
-        throw error;
-    }
-}
-
-// EndPoint para activar el envío automático de facturas
-app.post("/sendInvoicesAutomatically", async (req, res) => {
-    try {
-        await sendInvoicesAutomatically();
-        res.status(200).send('Envío automático de facturas activado correctamente');
-    } catch (error) {
-        console.error('Error en el endPoint sendInvoicesAutomatically:', error);
-        res.status(500).send('Error en el endPoint sendInvoicesAutomatically');
-    }
-});
-
-app.get("/getOdooClients", async (req, res) => {
-    try {
-        const clients = await getOdooClients();
-        res.status(200).json(clients);
-    } catch (error) {
-        console.error('Error en el endPoint getOdooClients:', error);
-        res.status(500).send('Error en el endPoint getOdooClients');
     }
 });
