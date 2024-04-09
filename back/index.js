@@ -46,6 +46,56 @@ app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
 });
 
+app.post("/pruebaEmail", async (req, res) => {
+    try {
+        // Lista de clientes y sus correos electrónicos
+        const clients = [
+            { name: 'Jonathan', email: 'andres_orellana_9@hotmail.com' },
+            { name: 'Andres', email: 'a22jonorevel@inspedralbes.cat' },
+            // Agrega más clientes si es necesario
+        ];
+
+        // Configuración del transporte de correo electrónico
+        const transporter = nodemailer.createTransport({
+            host: 'smtp.gmail.com', // Cambiar al servidor SMTP proporcionado
+            port: 465, // Cambiar al puerto SMTP proporcionado
+            secure: true, // Utilizar SSL/TLS
+            auth: {
+                user: 'a22jonorevel@inspedralbes.cat', // Reemplazar con tu dirección de correo electrónico
+                pass: 'wnuf zdif clzt atff' // Reemplazar con tu contraseña de correo electrónico
+            }
+        });
+
+        // Envío de correos electrónicos con las facturas adjuntas
+        for (const client of clients) {
+            const mailOptions = {
+                from: 'a22jonorevel@inspedralbes.cat', // Reemplazar con tu dirección de correo electrónico
+                to: client.email,
+                subject: 'Factura de tu compra',
+                text: 'Adjuntamos la factura de tu compra.',
+                attachments: [{
+                    filename: 'factura.pdf', // Nombre de la factura
+                    path: './factura.pdf' // Ruta a la factura en tu sistema de archivos
+                }]
+            };
+
+            // Envío del correo electrónico
+            transporter.sendMail(mailOptions, (error, info) => {
+                if (error) {
+                    console.error('Error al enviar el correo electrónico:', error);
+                } else {
+                    console.log('Correo electrónico enviado:', info.response);
+                }
+            });
+        }
+
+        res.status(200).send('Correos electrónicos enviados correctamente');
+    } catch (error) {
+        console.error('Error en el endPoint:', error);
+        res.status(500).send('Error en el endPoint');
+    }
+});
+
 app.post("/sendInvoicesByEmail", async (req, res) => {
     try {
         // Credenciales de Odoo
@@ -59,64 +109,44 @@ app.post("/sendInvoicesByEmail", async (req, res) => {
         const clientOptions = {
             host: '141.147.16.21',
             port: 8069,
-            path: '/xmlrpc/2/object'
+            path: '/xmlrpc/2/common'
         };
         const client = xmlrpc.createClient(clientOptions);
 
-        // Autenticación en Odoo y obtención de facturas y correos electrónicos
+        // Autenticación en Odoo
         client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], async (error, uid) => {
             if (error) {
                 console.error('Error en la autenticación con Odoo:', error);
                 res.status(500).send('Error en la autenticación con Odoo');
             } else {
                 try {
-                    // Consulta para obtener las facturas y direcciones de correo electrónico de los clientes
-                    const clients = await new Promise((resolve, reject) => {
-                        client.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search_read', [[]], { fields: ['name', 'email'] }], (error, clients) => {
-                            if (error) {
-                                reject(error);
-                            } else {
-                                resolve(clients);
-                            }
-                        });
-                    });
-
-                    // Configuración del transporte de correo electrónico
-                    const transporter = nodemailer.createTransport({
-                        service: 'Gmail',
-                        auth: {
-                            user: 'a22jonorevel@inspedralbes.cat', // Reemplazar con tu dirección de correo electrónico
-                            pass: 'Dam2023+++' // Reemplazar con tu contraseña de correo electrónico
-                        }
-                    });
-
-                    // Envío de correos electrónicos con las facturas adjuntas
-                    for (const client of clients) {
-                        const mailOptions = {
-                            from: 'a22jonorevel@inspedralbes.cat', // Reemplazar con tu dirección de correo electrónico
-                            to: client.email,
-                            subject: 'Factura de tu compra',
-                            text: 'Adjuntamos la factura de tu compra.',
-                            attachments: [{
-                                filename: 'factura.pdf', // Nombre de la factura
-                                path: '/ruta/a/tu/factura.pdf' // Ruta a la factura en tu sistema de archivos
-                            }]
+                    if (uid > 0) {
+                        const objectClientOptions = {
+                            host: '141.147.16.21',
+                            port: 8069,
+                            path: '/xmlrpc/2/object'
                         };
+                        const objectClient = xmlrpc.createClient(objectClientOptions);
 
-                        // Envío del correo electrónico
-                        transporter.sendMail(mailOptions, (error, info) => {
-                            if (error) {
-                                console.error('Error al enviar el correo electrónico:', error);
-                            } else {
-                                console.log('Correo electrónico enviado:', info.response);
-                            }
-                        });
+                        // Consultar las estadísticas de facturas en Odoo
+                        objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password,
+                            'account.invoice.report', 'search_read', [[]], { fields: ['partner_id', 'price_total'] }],
+                            (error, invoiceStats) => {
+                                if (error) {
+                                    console.error('Error al obtener las estadísticas de facturas de Odoo:', error);
+                                    res.status(500).send('Error al obtener las estadísticas de facturas de Odoo');
+                                } else {
+                                    // Aquí puedes procesar las estadísticas de facturas obtenidas y enviar correos electrónicos
+                                    res.status(200).json(invoiceStats);
+                                }
+                            });
+                    } else {
+                        console.log('Autenticación fallida.');
+                        res.status(401).send('Autenticación fallida');
                     }
-
-                    res.status(200).send('Correos electrónicos enviados correctamente');
                 } catch (error) {
-                    console.error('Error al obtener las facturas y correos electrónicos de Odoo:', error);
-                    res.status(500).send('Error al obtener las facturas y correos electrónicos de Odoo');
+                    console.error('Error al obtener las estadísticas de facturas de Odoo:', error);
+                    res.status(500).send('Error al obtener las estadísticas de facturas de Odoo');
                 }
             }
         });
@@ -125,6 +155,7 @@ app.post("/sendInvoicesByEmail", async (req, res) => {
         res.status(500).send('Error en el endPoint');
     }
 });
+
 
 app.post("/authoritzationLogin", async (req, res) => {
     console.log("POST :::: authoritzationLogin");
@@ -785,135 +816,5 @@ app.post("/getOdooClients", async (req, res) => {
     } catch (error) {
         console.error('Error al obtener los clientes de Odoo:', error);
         res.status(500).send('Error al obtener los clientes de Odoo');
-    }
-});
-
-
-app.post("/deleteEmptyClients", async (req, res) => {
-    try {
-        // Conectar con Odoo
-        const odooCredentials = {
-            db: 'GameDataBase',
-            user: 'a22jonorevel@inspedralbes.cat',
-            password: 'Dam2023+++'
-        };
-
-        const clientOptions = {
-            host: '141.147.16.21',
-            port: 8069,
-            path: '/xmlrpc/2/common'
-        };
-        const client = xmlrpc.createClient(clientOptions);
-
-        // Autenticar en Odoo
-        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
-            if (error) {
-                console.error('Error en la autenticación con Odoo:', error);
-                res.status(500).send('Error en la autenticación con Odoo');
-            } else {
-                if (uid > 0) {
-                    const objectClientOptions = {
-                        host: '141.147.16.21',
-                        port: 8069,
-                        path: '/xmlrpc/2/object'
-                    };
-                    const objectClient = xmlrpc.createClient(objectClientOptions);
-
-                    // Eliminar clientes con campo name vacío
-                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search', [[['name', '=', '']]]], (error, clientIds) => {
-                        if (error) {
-                            console.error('Error al buscar los clientes con campo name vacío:', error);
-                            res.status(500).send('Error al buscar los clientes con campo name vacío');
-                        } else {
-                            // Eliminar los registros encontrados
-                            objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'unlink', [clientIds]], (error, result) => {
-                                if (error) {
-                                    console.error('Error al eliminar los clientes con campo name vacío:', error);
-                                    res.status(500).send('Error al eliminar los clientes con campo name vacío');
-                                } else {
-                                    console.log('Clientes con campo name vacío eliminados correctamente:', result);
-                                    res.status(200).send('Clientes con campo name vacío eliminados correctamente');
-                                }
-                            });
-                        }
-                    });
-                } else {
-                    console.log('Autenticación fallida con Odoo.');
-                    res.status(401).send('Autenticación fallida con Odoo');
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error al eliminar los clientes con campo name vacío:', error);
-        res.status(500).send('Error al eliminar los clientes con campo name vacío');
-    }
-});
-
-
-app.post("/deleteClientByName", async (req, res) => {
-    try {
-        // Nombre del cliente a eliminar
-        const clientName = req.body.clientName; // Asumiendo que se envía el nombre del cliente en el cuerpo de la solicitud
-
-        // Conectar con Odoo
-        const odooCredentials = {
-            db: 'GameDataBase',
-            user: 'a22jonorevel@inspedralbes.cat',
-            password: 'Dam2023+++'
-        };
-
-        const clientOptions = {
-            host: '141.147.16.21',
-            port: 8069,
-            path: '/xmlrpc/2/common'
-        };
-        const client = xmlrpc.createClient(clientOptions);
-
-        // Autenticar en Odoo
-        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
-            if (error) {
-                console.error('Error en la autenticación con Odoo:', error);
-                res.status(500).send('Error en la autenticación con Odoo');
-            } else {
-                if (uid > 0) {
-                    const objectClientOptions = {
-                        host: '141.147.16.21',
-                        port: 8069,
-                        path: '/xmlrpc/2/object'
-                    };
-                    const objectClient = xmlrpc.createClient(objectClientOptions);
-
-                    // Buscar el ID del cliente por nombre
-                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search', [[['name', '=', clientName]]]], (error, clientIds) => {
-                        if (error) {
-                            console.error('Error al buscar el cliente por nombre en Odoo:', error);
-                            res.status(500).send('Error al buscar el cliente por nombre en Odoo');
-                        } else {
-                            if (clientIds.length === 0) {
-                                console.log('No se encontró ningún cliente con el nombre proporcionado.');
-                                res.status(404).send('No se encontró ningún cliente con el nombre proporcionado.');
-                            } else {
-                                // Eliminar el cliente por ID
-                                objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'unlink', [clientIds]], (error, result) => {
-                                    if (error) {
-                                        console.error('Error al eliminar el cliente en Odoo:', error);
-                                        res.status(500).send('Error al eliminar el cliente en Odoo');
-                                    } else {
-                                        console.log('Cliente eliminado correctamente:', clientName);
-                                        res.status(200).send('Cliente eliminado correctamente');
-                                    }
-                                });
-                            }
-                        }
-                    });
-                } else {
-                    console.log('Autenticación fallida con Odoo.');
-                    res.status(401).send('Autenticación fallida con Odoo');
-                }
-            }
-        });
-    } catch (error) {
-        console.error('Error al eliminar el cliente en Odoo:', error);
-        res.status(500).send('Error al eliminar el cliente en Odoo');
     }
 });
