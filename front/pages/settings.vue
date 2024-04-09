@@ -5,27 +5,25 @@
     <main>
         <div class="container-broadcast">
             <div class="row">
-                <div v-for="personatge in personatges" cols="12" md="4">
-                    <div v-for="(phrase, index) in phrases" cols="12" md="4">
-                        <div class="cardSettings">
+                <div v-for="(phrase, index) in phrases" cols="12" md="4">
+                    <div class="cardSettings">
+                        <div>
+                            <div class="container-phrase">
+                                <!-- Mostrar el texto si no estamos editando esta frase -->
+                                <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
+                                <!-- Mostrar el campo de entrada si estamos editando esta frase -->
+                                <input v-else v-model="editedPhrase" type="text">
+                            </div>
                             <div>
-                                <div class="container-phrase">
-                                    <!-- Mostrar el texto si no estamos editando esta frase -->
-                                    <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
-                                    <!-- Mostrar el campo de entrada si estamos editando esta frase -->
-                                    <input v-else v-model="editedPhrase" type="text">
-                                </div>
-                                <div>
-                                    <!-- Pasa el índice de la frase al método openModal -->
-                                    <button v-if="editingPhraseIndex == null" class="edit-button"
-                                        @click="openModal(index)">Editar</button>
-                                    <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
-                                    <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
-                                    <button v-if="editingPhraseIndex === index" class="edit-button"
-                                        @click="saveEditedPhrase(phrase._id)">Guardar</button>
-                                    <button v-if="editingPhraseIndex === index" class="edit-button"
-                                        @click="closeModal()">Cancelar</button>
-                                </div>
+                                <!-- Pasa el índice de la frase al método openModal -->
+                                <button v-if="editingPhraseIndex == null" class="edit-button"
+                                    @click="openModal(index)">Editar</button>
+                                <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
+                                <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
+                                <button v-if="editingPhraseIndex === index" class="edit-button"
+                                    @click="saveEditedPhrase(phrase._id)">Guardar</button>
+                                <button v-if="editingPhraseIndex === index" class="edit-button"
+                                    @click="closeModal()">Cancelar</button>
                             </div>
                         </div>
                     </div>
@@ -39,7 +37,7 @@
                 <div v-for="(menuAudio, index) in menuAudios" :key="index" class="audio-item">
                     <input type="radio" v-model="selectedMenuAudio" :value="menuAudio"
                         @change="selectMenuAudio(menuAudio)">
-                    <audio :src="menuAudio" type="audio/mpeg" controls>
+                    <audio class="aud" :src="menuAudio" type="audio/mpeg" controls>
                         Tu navegador no soporta el elemento de audio.
                     </audio>
                 </div>
@@ -50,7 +48,7 @@
                 <div v-for="(battleAudio, index) in battleAudios" :key="index" class="audio-item">
                     <input type="radio" v-model="selectedBattleAudio" :value="battleAudio"
                         @change="selectBattleAudio(battleAudio)">
-                    <audio :src="battleAudio" type="audio/mpeg" controls>
+                    <audio class="aud" :src="battleAudio" type="audio/mpeg" controls>
                         Tu navegador no soporta el elemento de audio.
                     </audio>
                 </div>
@@ -105,16 +103,6 @@ export default {
             editedPhrase: ''
         }
     },
-
-    mounted() {
-        const loginStore = useAppStore();
-        const router = useRouter();
-
-        if (!loginStore.isLoggedIn()) {
-            router.push('/');
-            alert("Debes iniciar sessión!")
-        }
-    },
     async created() {
         this.personatges = await getData();
         console.log(this.personatges)
@@ -125,6 +113,15 @@ export default {
         // Filtrar audios por tipo (menú vs. batalla)
         this.menuAudios = audios.filter(audio => audio.includes('menu'));
         this.battleAudios = audios.filter(audio => audio.includes('battle'));
+    },
+    mounted() {
+        const loginStore = useAppStore();
+        const router = useRouter();
+
+        if (!loginStore.isLoggedIn()) {
+            router.push('/');
+            alert("Debes iniciar sessión!")
+        }
     },
     methods: {
         // Método para cambiar la selección del audio del menú
@@ -217,6 +214,11 @@ main {
     transform: translateX(-50%);
     background-color: #ffffff;
     padding: 0 10px;
+}
+
+.aud {
+    border: 2px solid black;
+    background-color: #f7f5f5;
 }
 
 .row {

@@ -2,7 +2,6 @@
   <div class="button-container">
     <NuxtLink class="button" to="/home" style="text-decoration: none;">HOME</NuxtLink>
     <NuxtLink class="button" to="/characters" style="text-decoration: none;">CHARACTER</NuxtLink>
-    <NuxtLink class="button" to="/items" style="text-decoration: none;">ITEMS</NuxtLink>
     <NuxtLink class="button" to="/settings" style="text-decoration: none;">SETINGS</NuxtLink>
   </div>
 
