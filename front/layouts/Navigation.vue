@@ -2,7 +2,7 @@
   <div class="button-container">
     <NuxtLink class="button" to="/home" style="text-decoration: none;">HOME</NuxtLink>
     <NuxtLink class="button" to="/characters" style="text-decoration: none;">CHARACTER</NuxtLink>
-    <NuxtLink class="button" to="/settings" style="text-decoration: none;">SETINGS</NuxtLink>
+    <NuxtLink class="button" to="/configuration" style="text-decoration: none;">CONFIGURATION</NuxtLink>
   </div>
 
 </template>
@@ -16,7 +16,17 @@ export default {
 .button-container {
   display: flex;
   width: 99.5%;
-  background-color: #a8abac;
+  background: rgba(217, 217, 217, 0.58);
+    box-shadow: 12px 17px 51px rgba(0, 0, 0, 0.22);
+    backdrop-filter: blur(6px);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.5s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+    font-weight: bolder;
   height: 45px;
   align-items: center;
   justify-content: flex-end;

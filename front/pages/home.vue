@@ -1,7 +1,12 @@
 <template>
-    <div>
-        <Navigation />
-        HOME
+    <div class="back-home">
+        <div>
+            <Navigation />
+            HOME
+        </div>
+        <main>
+
+        </main>
     </div>
 </template>
 
@@ -25,3 +30,10 @@ export default {
     }
 }
 </script>
+<style>
+.back-home {
+    background-image: url('hhttps://cdn1.epicgames.com/ue/product/Screenshot/Screenshot11-1920x1080-9cd976fd185dbf1d32c0b6e5c1ff87e3.jpg?resize=1&w=1920');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+</style>

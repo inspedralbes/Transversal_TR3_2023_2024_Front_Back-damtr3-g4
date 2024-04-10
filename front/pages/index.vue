@@ -1,5 +1,5 @@
 <template>
-  <main>
+  <main class="back">
     <div class="wrapper">
       <div class="card-switch">
         <label class="switch">
@@ -73,7 +73,15 @@ export default {
       try {
         const insert = await insertUser(username.value, mail.value, password.value);
         console.log(insert);
-        username = ""
+        const response = await authoritzationLogin(mail.value, password.value);
+        if (response.authorization) {
+          loginStore.setLoginInfo({
+            loggedIn: true,
+            mail: response.mail,
+            username: response.name
+          });
+          router.push('/home');
+        }
       } catch (error) {
         console.error("Error al iniciar sesión:", error);
       }
@@ -91,9 +99,13 @@ export default {
 }
 </script>
 <style>
-/* body {
-  background-image: url(https://www.solofondos.com/wp-content/uploads/2023/05/desktop-wallpaper-5-retro-game-for-pc-and-mobile-gamer-retro.jpg)
-} */
+.back {
+  background-image: url('https://images6.alphacoders.com/129/1293302.jpg');
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+
+}
+
 main {
   display: flex;
   flex-direction: row-reverse;
@@ -106,11 +118,12 @@ main {
 
 .wrapper {
   --input-focus: #2d8cf0;
-  --font-color: #632222;
+  --font-color: #7cacde;
   --font-color-sub: #666;
   --bg-color: #fff;
   --bg-color-alt: #666;
   --main-color: #323232;
+  font-family: 'gaming';
   /* display: flex; */
   /* flex-direction: column; */
   /* align-items: center; */
@@ -235,7 +248,17 @@ main {
   justify-content: center;
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
-  background: lightgrey;
+  background: rgba(217, 217, 217, 0.318);
+  box-shadow: 12px 17px 51px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(6px);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.5s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  font-weight: bolder;
   gap: 20px;
   border-radius: 5px;
   border: 2px solid var(--main-color);
@@ -274,6 +297,7 @@ main {
   color: var(--font-color);
   padding: 5px 10px;
   outline: none;
+  font-family: 'gaming';
 }
 
 .flip-card__input::placeholder {
@@ -303,5 +327,6 @@ main {
   font-weight: 600;
   color: var(--font-color);
   cursor: pointer;
+  font-family: 'gaming';
 }
 </style>
