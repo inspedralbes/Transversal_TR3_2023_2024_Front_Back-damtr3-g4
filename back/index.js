@@ -49,7 +49,7 @@ app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
 });
 
-app.post('/getOdooClients', async (req, res) => {
+app.post('/getOdooClients', async (req, res) => { //EndPoint para las estadísticas de los clientes
     try {
         const clients = await getOdooClients();
         res.status(200).json(clients);
@@ -646,5 +646,58 @@ app.post("/migrateFromMongoToOdoo", async (req, res) => { //EndPoint para migrar
     } catch (error) {
         console.error("Error en la migración:", error);
         res.status(500).send("Error en la migración de MongoDB a Odoo.");
+    }
+});
+
+
+app.post("/getSalesStatistics", async (req, res) => { //EndPoint para las ventas
+    try {
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+
+                    // Obtener las estadísticas de ventas
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'sale.report', 'search_read', [[]], { fields: ['name', 'product_id', 'price_subtotal', 'product_uom_qty', 'date'] }], (error, sales) => {
+                        if (error) {
+                            console.error('Error al obtener las estadísticas de ventas:', error);
+                            res.status(500).send('Error al obtener las estadísticas de ventas');
+                        } else {
+                            console.log('Estadísticas de ventas:', sales);
+                            res.send({ sales: sales });
+                        }
+                    });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener las estadísticas de ventas:', error);
+        res.status(500).send('Error al obtener las estadísticas de ventas');
     }
 });

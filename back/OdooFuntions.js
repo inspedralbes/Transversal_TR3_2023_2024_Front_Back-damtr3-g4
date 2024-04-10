@@ -38,7 +38,7 @@ function getOdooClients() {
                     const objectClient = xmlrpc.createClient(objectClientOptions);
 
                     // Consultar los clientes en Odoo
-                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search_read', [[]], {fields: ['name', 'email']}], (error, clients) => {
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'res.partner', 'search_read', [[]], {fields: ['name', 'email','create_date']}], (error, clients) => {
                         if (error) {
                             console.error('Error al consultar los clientes en Odoo:', error);
                             reject('Error al consultar los clientes en Odoo');
