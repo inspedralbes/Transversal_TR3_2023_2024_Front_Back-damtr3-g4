@@ -449,7 +449,7 @@ app.post("/checkOdoo", async (req, res) => {
 });
 
 app.post("/odooConnection", async (req, res) => {
-  const xmlrpc = require("xmlrpc");
+  
 
   const db = "GameDataBase";
   const user = "a22jonorevel@inspedralbes.cat";
