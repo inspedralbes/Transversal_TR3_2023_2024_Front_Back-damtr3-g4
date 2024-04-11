@@ -11,7 +11,6 @@ const server = http.createServer(app);
 const port = 3789;
 const { Client } = require('ssh2');
 const xmlrpc = require('xmlrpc'); //Se utiliza para establecer la conexión con Odoo
-const nodemailer = require('nodemailer');
 
 
 app.use(express.json());
