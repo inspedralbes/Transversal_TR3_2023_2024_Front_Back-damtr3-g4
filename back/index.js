@@ -41,7 +41,8 @@ const {
     insertSkin,
     selectPlayersInGame,
     getIdGame,
-    updateUserGameId
+    updateUserGameId,
+    selectUserDataById
 } = require("./dbFunctions");
 
 const {
@@ -80,6 +81,14 @@ app.post("/authoritzationLogin", async (req, res) => {
   }
 });
 
+app.post("/getUser", async(req,res)=>{
+  const data = req.body;
+  console.log(data);
+  const result = await selectUserDataById(data.id);
+  console.log(result);
+  res.send(result[0]);
+})
+
 app.post("/insertUser", async (req, res) => {
   const user = req.body;
   user.password = doCryptMD5Hash(req.body.password);
@@ -116,8 +125,15 @@ app.post("/updateUserCharacter", async(req,res)=>{
 
 app.post("/getSkinsByUser", async(req, res)=>{
   const data = req.body;
-  const result = await getSkinsByIdUser(data.idUser);
-  res.send({result: result})
+  console.log(data);
+  const skins = await getSkinsByIdUser(data.id);
+  console.log(skins);
+  const skinsData = [];
+   for (const idSkin of skins[0].idSkins) {
+    let skinData = await getDataSkinByIdSkin(idSkin);
+    skinsData.push(skinData[0]);
+  }
+  res.send(skinsData)
 });
 
 app.post("/getSkinById", async(req, res)=>{
@@ -775,13 +791,14 @@ io.on('connection', function (socket) {
 
     });
 
-    
     socket.on("sendStartGame", async(verifyUsers)=>{
         console.log("------------------ SEND START GAME ------------------");
         console.log(verifyUsers);
+        const verifyUsersParseado = JSON.parse(verifyUsers)
+        console.log(verifyUsersParseado);
         var usuariosEmit = [];
         usersConnected.forEach(u => {
-            verifyUsers.forEach(uBD => {
+          verifyUsersParseado.forEach(uBD => {
                 if (uBD.id == u.userId) {
                     usuariosEmit.push(u);
                 }
@@ -789,7 +806,7 @@ io.on('connection', function (socket) {
         });
 
         usuariosEmit.forEach(u => {
-            u.socketId.emit('getStartGame', verifyUsers);
+            u.socketId.emit('getStartGame', verifyUsersParseado);
         });
         
     });
@@ -804,7 +821,6 @@ io.on('connection', function (socket) {
 
         console.log("Users: " + usersConnected.length);
     });
-
 });
 
 server.listen(port, () => {

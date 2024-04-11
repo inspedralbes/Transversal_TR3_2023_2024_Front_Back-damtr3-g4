@@ -65,6 +65,7 @@ async function getDataSkinByIdSkin(idSkin){
 }
 
 async function getSkinsByIdUser(idUser){
+  console.log(idUser);
   try{
     await client.connect();
     const database = client.db(dbName);
@@ -72,6 +73,7 @@ async function getSkinsByIdUser(idUser){
     const result = await collection.find({ idUser: idUser }).project({ _id: 0, idSkins: 1 }).toArray();
     return result;
   } catch(err){
+    console.log("CAGASGTE EN SKIN BY USER ID. mongofunction");
     console.log(err.message);
   }
 }
