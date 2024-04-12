@@ -10,7 +10,8 @@ module.exports = {
     insertSkin,
     selectPlayersInGame,
     getIdGame,
-    updateUserGameId
+    updateUserGameId,
+    selectUserDataById
 };
 
 var dbConfig = {
@@ -42,6 +43,22 @@ function selectUserByMailPass(mail, password) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
         var sql = "SELECT id, correo, usuario FROM Usuario WHERE correo='" + mail + "' and contrasenya='" + password + "';";
+
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+        });
+        disconnectDB(con);
+    });
+}
+
+function selectUserDataById(id){
+    return new Promise((resolve, reject) => {
+        let con = conectDB();
+        var sql = "SELECT correo, usuario, fecha_registro, skin FROM Usuario WHERE id="+ id +";";
 
         con.query(sql, function (err, result) {
             if (err) {
@@ -110,7 +127,7 @@ function getIdGame(password){
 function selectPlayersInGame(id, state) {
     return new Promise((resolve, reject) => {
         let con = conectDB();
-        var sql = "SELECT Usuario.id, Usuario.usuario, Usuario.correo FROM Usuario JOIN Partida ON Usuario.id_partida = Partida.id WHERE Partida.id = '"+ id +"' AND Partida.estado = '"+ state +"'; ";
+        var sql = "SELECT Usuario.id, Usuario.usuario, Usuario.correo, Usuario.skin FROM Usuario JOIN Partida ON Usuario.id_partida = Partida.id WHERE Partida.id = '"+ id +"' AND Partida.estado = '"+ state +"'; ";
 
         con.query(sql, function (err, result) {
             if (err) {

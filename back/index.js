@@ -1,7 +1,8 @@
 const express = require("express");
 const session = require("express-session");
-const xmlrpc = require("xmlrpc");
+
 const http = require("http");
+const xmlrpc = require("xmlrpc");
 const fs = require("fs");
 const path = require("path");
 const { ObjectId } = require("mongodb");
@@ -11,8 +12,10 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 const bodyParser = require("body-parser");
-const { Client } = require("ssh2");
+const { Client } = require('ssh2');
 const port = 3789;
+const musicMenuURL = "tr3.dam.inspedralbes.cat:3789/music/menu.mp3";
+const musicGameURL = "tr3.dam.inspedralbes.cat:3789/music/battle.mp3";
 
 app.use(express.json());
 app.use(cors());
@@ -20,6 +23,8 @@ app.use(bodyParser.json());
 // Servir archivos estáticos desde la carpeta 'assets'
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 const routeImg = path.join(__dirname, "assetsForAndroid");
+app.use("/assetsForAndroid", express.static(routeImg));
+
 // Ruta donde se encuentran los archivos de audio
 const audioFolder = path.join(__dirname, "music");
 app.use("/audio", express.static(audioFolder));
@@ -32,14 +37,15 @@ const io = new Server(server, {
 });
 
 const {
-  selectUserByMailPass,
-  insertUser,
-  selectUsers,
-  insertGame,
-  insertSkin,
-  selectPlayersInGame,
-  getIdGame,
-  updateUserGameId,
+    selectUserByMailPass,
+    insertUser,
+    selectUsers,
+    insertGame,
+    insertSkin,
+    selectPlayersInGame,
+    getIdGame,
+    updateUserGameId,
+    selectUserDataById
 } = require("./dbFunctions");
 
 const {
@@ -48,57 +54,23 @@ const {
   insertBroadcast,
   getBroadcast,
   editMessage,
+  insertUserCharacter,
+  updateUserCharacter,
+  getSkinsByIdUser,
+  getDataSkinByIdSkin
 } = require("./mongoFuntions");
 
 const {
-  getOdooClients,
-  createSaleOrderInOdoo,
-  getProductInfo,
-  insertUserToOdoo,
-} = require("./OdooFuntions");
+    getOdooClients,
+    createSaleOrderInOdoo,
+    getProductInfo,
+    insertUserToOdoo,
+} = require("./odooFunction");
 
-
-app.get("/allUsers", async (req, res) => {
-  res.send(await selectUsers());
+app.get("/allUsers", async(req,res)=>{
+    res.send(await selectUsers());
 });
 
-app.post('/getOdooClients', async (req, res) => { //EndPoint para las estadísticas de los clientes
-  try {
-      const clients = await getOdooClients();
-      res.status(200).json(clients);
-  } catch (error) {
-      console.error('Error al obtener los clientes de Odoo:', error);
-      res.status(500).send('Error al obtener los clientes de Odoo');
-  }
-});
-
-app.post("/createSaleOrder", async (req, res) => {
-  const { productId, partnerId } = req.body;
-
-  if (!productId || !partnerId) {
-      res.status(400).send('Se requieren los IDs de producto y cliente');
-      return;
-  }
-
-  try {
-      const saleOrderId = await createSaleOrderInOdoo(productId, partnerId);
-      console.log(saleOrderId);
-      res.status(200).json({ saleOrderId });
-  } catch (error) {
-      console.error('Error al crear la orden de venta:', error);
-      res.status(500).send('Error al crear la orden de venta en Odoo');
-  }
-});
-
-app.post("/getProductInfo", async (req, res) => {
-  try {
-      const productList = await getProductInfo();
-      res.status(200).json(productList);
-  } catch (error) {
-      console.error('Error al obtener la lista de productos:', error);
-      res.status(500).send('Error al obtener la lista de productos');
-  }
-});
 
 app.post("/authoritzationLogin", async (req, res) => {
   console.log("POST :::: authoritzationLogin");
@@ -119,6 +91,14 @@ app.post("/authoritzationLogin", async (req, res) => {
   }
 });
 
+app.post("/getUser", async(req,res)=>{
+  const data = req.body;
+  console.log(data);
+  const result = await selectUserDataById(data.id);
+  console.log(result);
+  res.send(result[0]);
+})
+
 app.post("/insertUser", async (req, res) => {
   const user = req.body;
   user.password = doCryptMD5Hash(req.body.password);
@@ -127,27 +107,51 @@ app.post("/insertUser", async (req, res) => {
 });
 
 app.post("/joinGame", async (req, res) => {
-  const dataGameJoin = req.body;
-  console.log(dataGameJoin);
-  const idGame = await updateUserGameId(
-    dataGameJoin.passwordGame,
-    dataGameJoin.idUser
-  );
-  console.log(idGame);
-  res.send({ idGame: idGame[0].id });
+    const dataGameJoin = req.body;
+    console.log(dataGameJoin);
+    const idGame = await updateUserGameId(dataGameJoin.passwordGame, dataGameJoin.idUser);
+    console.log(idGame);
+    res.send({ idGame: idGame[0].id })
 });
 
 app.post("/initGame", async (req, res) => {
-  const dataGame = req.body;
-  const idGame = await insertGame(
-    dataGame.numPlayers,
-    dataGame.state,
-    dataGame.password
-  );
-  console.log(idGame);
-  res.send({ idGame: idGame[0].id, passwordGame: dataGame.password });
-});
+    const dataGame = req.body;
+    const idGame = await insertGame(dataGame.numPlayers, dataGame.state, dataGame.password);
+    console.log(idGame);
+    res.send({ idGame: idGame[0].id, passwordGame: dataGame.password })
+  });
 // MONGO
+app.post("/inserUserCharacter", async(req,res)=>{
+  const data = req.body;
+  await insertUserCharacter(data.idUser);
+  res.send({result: "Do correct insert"})
+});
+
+app.post("/updateUserCharacter", async(req,res)=>{
+  const data = req.body;
+  const result = await updateUserCharacter(data.idUser, data.idSkin);
+  res.send({result: result})
+})
+
+app.post("/getSkinsByUser", async(req, res)=>{
+  const data = req.body;
+  console.log(data);
+  const skins = await getSkinsByIdUser(data.id);
+  console.log(skins);
+  const skinsData = [];
+   for (const idSkin of skins[0].idSkins) {
+    let skinData = await getDataSkinByIdSkin(idSkin);
+    skinsData.push(skinData[0]);
+  }
+  res.send(skinsData)
+});
+
+app.post("/getSkinById", async(req, res)=>{
+  const data = req.body;
+  const result = await getDataSkinByIdSkin(data.idSkin);
+  res.send({result: result});
+});
+
 app.post("/insertCharacter", async (req, res) => {
   const data = req.body;
   const result = await insertData(
@@ -170,7 +174,6 @@ app.get("/getData", async (req, res) => {
 app.post("/selectCharacter/:id", async (req, res) => {
   const id = req.params.id;
   const isActive = req.body.isActive;
-  console.log(req.body);
   console.log("ID::::" + id);
   const nameFile = id + ".png";
   const routeFile = path.join(routeImg, nameFile);
@@ -186,29 +189,27 @@ app.post("/selectCharacter/:id", async (req, res) => {
 });
 
 // Con esta funcion manda todos los sprites para android
-app.get("/getAllCharacters", async (req, res) => {
+app.get("/getAllCharacters", async (req, res) =>{
+
   try {
-    // Leer el contenido del directorio
-    const files = await fs.promises.readdir(routeImg);
+      // Leer el contenido del directorio
+      const files = await fs.promises.readdir(routeImg);
 
-    // Filtrar solo los archivos de imagen (asumiendo que solo quieres archivos con extensiones jpg, png y gif)
-    const imageFiles = files.filter((file) => {
-      const ext = path.extname(file).toLowerCase();
-      return (
-        ext === ".jpg" || ext === ".jpeg" || ext === ".png" || ext === ".gif"
-      );
-    });
+      // Filtrar solo los archivos de imagen (asumiendo que solo quieres archivos con extensiones jpg, png y gif)
+      const imageFiles = files.filter(file => {
+          const ext = path.extname(file).toLowerCase();
+          return ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.gif';
+      });
 
-    // Enviar la lista de archivos de imagen como respuesta
-    res.json({ imageFiles });
+      // Enviar la lista de archivos de imagen como respuesta
+      res.json({ imageFiles });
   } catch (error) {
-    // Manejar errores
-    console.error("Error al leer el directorio:", error);
-    res
-      .status(500)
-      .json({ error: "Ocurrió un error al obtener los archivos." });
+      // Manejar errores
+      console.error('Error al leer el directorio:', error);
+      res.status(500).json({ error: 'Ocurrió un error al obtener los archivos.' });
   }
 });
+
 
 app.post("/insertMessage", async (req, res) => {
   const data = req.body;
@@ -220,7 +221,6 @@ app.post("/insertMessage", async (req, res) => {
 app.get("/getBroadcast", async (req, res) => {
   try {
     const data = await getBroadcast();
-    const character = await getData();
     res.send(data);
   } catch (err) {
     console.log(err.menssage);
@@ -228,16 +228,20 @@ app.get("/getBroadcast", async (req, res) => {
 });
 
 // Define la ruta para actualizar un mensaje
-app.put("/updateMessage/:id", async (req, res) => {
+app.put('/updateMessage/:id', async (req, res) => {
+  console.log("caca");
   const id = req.params.id;
-  const newMessage = req.body.message;
-  console.log(newMessage);
+  const message = req.body;
+  console.log(id);
+  console.log(message);
   try {
-    if (!newMessage) {
-      throw new Error("Se requiere un nuevo mensaje.");
+    if (!message) {
+      throw new Error('Se requiere un nuevo mensaje.');
     }
-    const result = await editMessage(id, newMessage); // Editar el mensaje
-    res.send({ message: "Mensaje actualizado correctamente." });
+
+    const result = await editMessage(id, message.message); // Editar el mensaje
+    io.emit('messageUpdated', { id, message: message.message }); // Emitir un evento a todos los clientes conectados
+    res.send({ message: 'Mensaje actualizado correctamente.' });
   } catch (error) {
     console.log(error.message);
     res.status(500).send({ error: error.message });
@@ -258,7 +262,7 @@ app.get("/audios", (req, res) => {
 
     // Construir la lista de URLs completas para cada archivo
     const audioUrls = mp3Files.map(
-      (fileName) => `http://localhost:3789/audio/${fileName}`
+      (fileName) => `http://tr3.dam.inspedralbes.cat:3789/audio/${fileName}`
     );
 
     // Devolver la lista de URLs de archivos de audio
@@ -266,10 +270,18 @@ app.get("/audios", (req, res) => {
   });
 });
 
-app.post("/returnAudio", (req, res) => {
+app.post("/returnAudioMenu", (req, res) => {
   const { audioUrl } = req.body;
-  console.log(audioUrl);
+  musicMenuURL = audioUrl;
+  res.send({result: "SUCCESFUL"})
 });
+
+app.post("/returnAudioGame", (req, res) => {
+  const { audioUrl } = req.body;
+  musicGameURL = audioUrl;
+  res.send({result: "SUCCESFUL"})
+});
+
 
 // ------------------------------ Odoo ----------------------------------------------------------------
 async function DetenerOdoo() {
@@ -995,163 +1007,189 @@ app.post("/syncUsersToOdoo", async (req, res) => {
   }
 });
 
+app.post('/getOdooClients', async (req, res) => { //EndPoint para las estadísticas de los clientes
+    try {
+        const clients = await getOdooClients();
+        res.status(200).json(clients);
+    } catch (error) {
+        console.error('Error al obtener los clientes de Odoo:', error);
+        res.status(500).send('Error al obtener los clientes de Odoo');
+    }
+  });
+  
+  app.post("/createSaleOrder", async (req, res) => {
+    const { productId, partnerId } = req.body;
+  
+    if (!productId || !partnerId) {
+        res.status(400).send('Se requieren los IDs de producto y cliente');
+        return;
+    }
+  
+    try {
+        const saleOrderId = await createSaleOrderInOdoo(productId, partnerId);
+        console.log(saleOrderId);
+        res.status(200).json({ saleOrderId });
+    } catch (error) {
+        console.error('Error al crear la orden de venta:', error);
+        res.status(500).send('Error al crear la orden de venta en Odoo');
+    }
+  });
+  
+  app.post("/getProductInfo", async (req, res) => {
+    try {
+        const productList = await getProductInfo();
+        res.status(200).json(productList);
+    } catch (error) {
+        console.error('Error al obtener la lista de productos:', error);
+        res.status(500).send('Error al obtener la lista de productos');
+    }
+  });
+
+  app.post("/getSalesStatistics", async (req, res) => { //EndPoint para las ventas
+    try {
+        // Conectar con Odoo
+        const odooCredentials = {
+            db: 'GameDataBase',
+            user: 'a22jonorevel@inspedralbes.cat',
+            password: 'Dam2023+++'
+        };
+  
+        const clientOptions = {
+            host: '141.147.16.21',
+            port: 8069,
+            path: '/xmlrpc/2/common'
+        };
+        const client = xmlrpc.createClient(clientOptions);
+  
+        // Autenticar en Odoo
+        client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
+            if (error) {
+                console.error('Error en la autenticación con Odoo:', error);
+                res.status(500).send('Error en la autenticación con Odoo');
+            } else {
+                if (uid > 0) {
+                    const objectClientOptions = {
+                        host: '141.147.16.21',
+                        port: 8069,
+                        path: '/xmlrpc/2/object'
+                    };
+                    const objectClient = xmlrpc.createClient(objectClientOptions);
+  
+                    // Obtener las estadísticas de ventas
+                    objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'sale.report', 'search_read', [[]], { fields: ['name', 'product_id', 'price_subtotal', 'product_uom_qty', 'date'] }], (error, sales) => {
+                        if (error) {
+                            console.error('Error al obtener las estadísticas de ventas:', error);
+                            res.status(500).send('Error al obtener las estadísticas de ventas');
+                        } else {
+                            console.log('Estadísticas de ventas:', sales);
+                            res.send({ sales: sales });
+                        }
+                    });
+                } else {
+                    console.log('Autenticación fallida con Odoo.');
+                    res.status(401).send('Autenticación fallida con Odoo');
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener las estadísticas de ventas:', error);
+        res.status(500).send('Error al obtener las estadísticas de ventas');
+    }
+  });
+
+
 // -------------------------------------------------------- SOCKETS ----------------------------------------
 
 var usersConnected = [];
 
-io.on("connection", function (socket) {
-  console.log("SOCKET::::: ");
-  socket.on("login", async (user) => {
-    let userParseado = JSON.parse(user);
-    usersConnected.push({
-      socketId: socket,
-      userId: userParseado.id,
-      userName: userParseado.name,
-    });
-    console.log("User connected id: " + userParseado.id);
-    console.log("Users: " + usersConnected.length);
-  });
-
-  socket.on("getBroadcast", () => {
-    const data = getBroadcast();
-    socket.emit("broadcast", data);
-  });
-
-  socket.on("getUsersInGame", async (dataGame) => {
-    const dataParseado = JSON.parse(dataGame);
-    console.log("GET USER IN GAME ID: ", dataParseado.idGame);
-    const usersInGame = await selectPlayersInGame(
-      dataParseado.idGame,
-      dataParseado.state
-    );
-    var usuariosEmit = [];
-    usersConnected.forEach((u) => {
-      usersInGame.forEach((uBD) => {
-        if (uBD.id == u.userId) {
-          usuariosEmit.push(u);
-        }
-      });
-    });
-    usuariosEmit.forEach((u) => {
-      u.socketId.emit("usersInGame", usersInGame);
-    });
-  });
-
-  socket.on("sendMovementUser", async (users) => {
-    console.log("SEND MOVEMENT USER IN GAME");
-    const userParseado = JSON.parse(users);
-    const userDataToSend = userParseado[userParseado.length - 1];
-    console.log(userDataToSend);
-    var usuariosEmit = [];
-    usersConnected.forEach((u) => {
-      userParseado.forEach((uBD) => {
-        if (uBD.id == u.userId) {
-          usuariosEmit.push(u);
-        }
-      });
-    });
-    console.log(
-      "---------------------------USERS PARA ENVIAR EMIT-----------------------"
-    );
-    usuariosEmit.forEach((element) => {
-      console.log(element.userName);
-      console.log(element.userId);
-    });
-    usuariosEmit.forEach((u) => {
-      u.socketId.emit("getMovementUser", userDataToSend);
-    });
-  });
-
-  socket.on("sendStartGame", async (verifyUsers) => {
-    console.log("------------------ SEND START GAME ------------------");
-    console.log(verifyUsers);
-    var usuariosEmit = [];
-    usersConnected.forEach((u) => {
-      verifyUsers.forEach((uBD) => {
-        if (uBD.id == u.userId) {
-          usuariosEmit.push(u);
-        }
-      });
+io.on('connection', function (socket) {
+    console.log("SOCKET::::: ");
+    socket.on("login", async (user) => {
+        let userParseado = JSON.parse(user);
+        usersConnected.push({ socketId: socket, userId: userParseado.id, userName: userParseado.name })
+        console.log("User connected id: " + userParseado.id);
+        console.log("Users: " + usersConnected.length);
     });
 
-    usuariosEmit.forEach((u) => {
-      u.socketId.emit("getStartGame", verifyUsers);
+
+    socket.on("getUsersInGame", async (dataGame) => {
+        const dataParseado = JSON.parse(dataGame);
+        console.log("GET USER IN GAME ID: ", dataParseado.idGame);
+        const usersInGame = await selectPlayersInGame(dataParseado.idGame, dataParseado.state);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            usersInGame.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('usersInGame', usersInGame);
+        });
     });
-  });
 
-  socket.on("disconnect", () => {
-    usersConnected.forEach((u) => {
-      if (u.socketId == socket) {
-        console.log("User disconnected id: " + u.userId);
-        usersConnected.pop(u);
-      }
+    socket.on("sendMovementUser", async (users) => {
+        console.log("SEND MOVEMENT USER IN GAME");
+        const userParseado = JSON.parse(users);
+        const userDataToSend = userParseado[userParseado.length-1];
+        console.log(userDataToSend);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+            userParseado.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
+        console.log("---------------------------USERS PARA ENVIAR EMIT-----------------------");
+        usuariosEmit.forEach(element => {
+            console.log(element.userName);
+            console.log(element.userId);
+        });
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('getMovementUser', userDataToSend);
+        });
+
     });
 
-    console.log("Users: " + usersConnected.length);
-  });
+    socket.on("sendStartGame", async(verifyUsers)=>{
+        console.log("------------------ SEND START GAME ------------------");
+        console.log(verifyUsers);
+        const verifyUsersParseado = JSON.parse(verifyUsers)
+        console.log(verifyUsersParseado);
+        var usuariosEmit = [];
+        usersConnected.forEach(u => {
+          verifyUsersParseado.forEach(uBD => {
+                if (uBD.id == u.userId) {
+                    usuariosEmit.push(u);
+                }
+            });
+        });
 
-  socket.on("initGame", (msg) => {
-    io.emit("initGame", msg);
-  });
+        usuariosEmit.forEach(u => {
+            u.socketId.emit('getStartGame', verifyUsersParseado);
+        });
+        
+    });
+
+    socket.on("disconnect", () => {
+        usersConnected.forEach(u => {
+            if (u.socketId == socket) {
+                console.log("User disconnected id: " + u.userId);
+                usersConnected.pop(u)
+            }
+        });
+
+        console.log("Users: " + usersConnected.length);
+    });
 });
 
 server.listen(port, () => {
-  console.log(`Server running on http//:localhost:${port}`);
+  console.log(`Server running on http://tr3.dam.inspedralbes.cat:${port}`);
 });
 
 function doCryptMD5Hash(password) {
   var hash = CryptoJS.MD5(password);
   return hash.toString();
 }
-
-app.post("/getSalesStatistics", async (req, res) => { //EndPoint para las ventas
-  try {
-      // Conectar con Odoo
-      const odooCredentials = {
-          db: 'GameDataBase',
-          user: 'a22jonorevel@inspedralbes.cat',
-          password: 'Dam2023+++'
-      };
-
-      const clientOptions = {
-          host: '141.147.16.21',
-          port: 8069,
-          path: '/xmlrpc/2/common'
-      };
-      const client = xmlrpc.createClient(clientOptions);
-
-      // Autenticar en Odoo
-      client.methodCall('authenticate', [odooCredentials.db, odooCredentials.user, odooCredentials.password, {}], (error, uid) => {
-          if (error) {
-              console.error('Error en la autenticación con Odoo:', error);
-              res.status(500).send('Error en la autenticación con Odoo');
-          } else {
-              if (uid > 0) {
-                  const objectClientOptions = {
-                      host: '141.147.16.21',
-                      port: 8069,
-                      path: '/xmlrpc/2/object'
-                  };
-                  const objectClient = xmlrpc.createClient(objectClientOptions);
-
-                  // Obtener las estadísticas de ventas
-                  objectClient.methodCall('execute_kw', [odooCredentials.db, uid, odooCredentials.password, 'sale.report', 'search_read', [[]], { fields: ['name', 'product_id', 'price_subtotal', 'product_uom_qty', 'date'] }], (error, sales) => {
-                      if (error) {
-                          console.error('Error al obtener las estadísticas de ventas:', error);
-                          res.status(500).send('Error al obtener las estadísticas de ventas');
-                      } else {
-                          console.log('Estadísticas de ventas:', sales);
-                          res.send({ sales: sales });
-                      }
-                  });
-              } else {
-                  console.log('Autenticación fallida con Odoo.');
-                  res.status(401).send('Autenticación fallida con Odoo');
-              }
-          }
-      });
-  } catch (error) {
-      console.error('Error al obtener las estadísticas de ventas:', error);
-      res.status(500).send('Error al obtener las estadísticas de ventas');
-  }
-});
