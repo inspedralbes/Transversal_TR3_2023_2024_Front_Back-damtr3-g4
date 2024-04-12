@@ -134,5 +134,12 @@ export async function syncOdoo() {
   
 }
 
+export async function getInfo() {
+  const response = await fetch("http://localhost:3789/obtener-datos")
+  const info = await response.json();
+  console.log(info);
+  return info;
+}
+
 
 
