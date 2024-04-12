@@ -9,6 +9,7 @@ const dbName = "AssetsGame";
 const collectionName = "CHARACTERS";
 const collectionName2 = "BROADCAST";
 const collectionUSERCHARACTER = "USERCHARACTERS";
+const collectionUSINFO = "INFO";
 module.exports = {
     insertData,
     getData,
@@ -18,7 +19,9 @@ module.exports = {
     insertUserCharacter,
     updateUserCharacter,
     getSkinsByIdUser,
-    getDataSkinByIdSkin
+    getDataSkinByIdSkin,
+    insertInfo,
+    getInfo
 }
 async function insertData(nameCharacter, description, picture) {
   try {
@@ -158,6 +161,39 @@ async function editMessage(id, newMessage) {
   } catch(err) {
     console.log(err.message);
     throw new Error("No se pudo actualizar el mensaje.");
+  }
+}
+
+async function insertInfo(title, description,picture) {
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionUSINFO);
+    const data = {
+      title: title,
+      description: description,
+      picture: picture,
+    };
+    const result = await collection.insertOne(data);
+    console.log(`Se inserto correctamente`);
+    await client.close();
+  } catch (err) {
+    console.log(err.message);
+  }
+}
+
+async function getInfo() {
+  const client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionUSINFO);
+    const data = await collection.find({}).toArray();
+    return data;
+  } catch (err) {
+    console.log(err.message);
+  } finally {
+    await client.close();
   }
 }
 
