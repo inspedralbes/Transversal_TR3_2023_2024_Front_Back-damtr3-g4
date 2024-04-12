@@ -14,8 +14,8 @@ const server = http.createServer(app);
 const bodyParser = require("body-parser");
 const { Client } = require('ssh2');
 const port = 3789;
-const musicMenuURL = "tr3.dam.inspedralbes.cat:3789/music/menu.mp3";
-const musicGameURL = "tr3.dam.inspedralbes.cat:3789/music/battle.mp3";
+const musicMenuURL = "http//:localhost:3789/music/menu.mp3";
+const musicGameURL = "http//:localhost:3789/music/battle.mp3";
 
 app.use(express.json());
 app.use(cors());
@@ -57,7 +57,9 @@ const {
   insertUserCharacter,
   updateUserCharacter,
   getSkinsByIdUser,
-  getDataSkinByIdSkin
+  getDataSkinByIdSkin,
+  insertInfo,
+  getInfo
 } = require("./mongoFuntions");
 
 const {
@@ -262,7 +264,7 @@ app.get("/audios", (req, res) => {
 
     // Construir la lista de URLs completas para cada archivo
     const audioUrls = mp3Files.map(
-      (fileName) => `http://tr3.dam.inspedralbes.cat:3789/audio/${fileName}`
+      (fileName) => `http://http//:localhost:3789/audio/${fileName}`
     );
 
     // Devolver la lista de URLs de archivos de audio
@@ -282,6 +284,28 @@ app.post("/returnAudioGame", (req, res) => {
   res.send({result: "SUCCESFUL"})
 });
 
+app.post('/info', async (req, res) => {
+  // Recoge los datos del cuerpo de la solicitud
+  const { title, description,picture } = req.body;
+
+  // Llama a la función insertInfo para insertar los datos en la base de datos
+  await insertInfo(title, description,picture);
+
+  // Responde con un mensaje indicando que se han insertado los datos correctamente
+  res.send('Datos insertados correctamente en la base de datos.');
+});
+
+app.get('/obtener-datos', async (req, res) => {
+  try {
+    // Llama a la función getInfo para obtener los datos de la base de datos
+    const data = await getInfo();
+    // Envía los datos como respuesta al cliente
+    res.json(data);
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).send('Error al obtener los datos de la base de datos.');
+  }
+});
 
 // ------------------------------ Odoo ----------------------------------------------------------------
 async function DetenerOdoo() {
@@ -1186,7 +1210,7 @@ io.on('connection', function (socket) {
 });
 
 server.listen(port, () => {
-  console.log(`Server running on http://tr3.dam.inspedralbes.cat:${port}`);
+  console.log(`Server running on http://http//:localhost:${port}`);
 });
 
 function doCryptMD5Hash(password) {
