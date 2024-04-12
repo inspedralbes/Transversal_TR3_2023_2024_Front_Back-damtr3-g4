@@ -1,0 +1,11 @@
+{
+  "name": "transversal_tr3_2023_2024_front_back-damtr3-g4",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}
