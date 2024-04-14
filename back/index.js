@@ -329,7 +329,6 @@ app.get('/obtener-datos', async (req, res) => {
     res.status(500).send('Error al obtener los datos de la base de datos.');
   }
 });
-
 // ------------------------------ Odoo ----------------------------------------------------------------
 async function DetenerOdoo() {
   const con = new Client();
