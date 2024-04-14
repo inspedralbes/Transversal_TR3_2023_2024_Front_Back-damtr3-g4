@@ -9,6 +9,7 @@ const dbName = "AssetsGame";
 const collectionName = "CHARACTERS";
 const collectionName2 = "BROADCAST";
 const collectionUSERCHARACTER = "USERCHARACTERS";
+const collectionUSINFO = "INFO";
 module.exports = {
     insertData,
     getData,
@@ -18,7 +19,8 @@ module.exports = {
     insertUserCharacter,
     updateUserCharacter,
     getSkinsByIdUser,
-    getDataSkinByIdSkin
+    getDataSkinByIdSkin,
+    getInfo
 }
 async function insertData(nameCharacter, description, picture) {
   try {
@@ -36,6 +38,21 @@ async function insertData(nameCharacter, description, picture) {
     await client.close();
   } catch (err) {
     console.log(err.message);
+  }
+}
+
+async function getInfo() {
+  const client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+  try {
+    await client.connect();
+    const database = client.db(dbName);
+    const collection = database.collection(collectionUSINFO);
+    const data = await collection.find({}).toArray();
+    return data;
+  } catch (err) {
+    console.log(err.message);
+  } finally {
+    await client.close();
   }
 }
 
@@ -147,8 +164,11 @@ async function editMessage(id, newMessage) {
     await client.connect();
     const database = client.db(dbName);
     const collection = database.collection(collectionName2);
+
+    const objectId = new ObjectId(id);
+
     const result = await collection.updateOne(
-      { _id: id },
+      { _id: objectId },
       { $set: { message: newMessage } }
     );
     return result;

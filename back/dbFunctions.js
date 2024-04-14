@@ -11,7 +11,8 @@ module.exports = {
     selectPlayersInGame,
     getIdGame,
     updateUserGameId,
-    selectUserDataById
+    selectUserDataById,
+    updateUserSkin
 };
 
 var dbConfig = {
@@ -86,7 +87,21 @@ function insertUser(name, password, mail) {
     });
 }
 
+function updateUserSkin(id, skinUrl){
+    return new Promise((resolve, reject)=>{
+        let con = conectDB();
+        var sql = "UPDATE Usuario SET skin = '"+skinUrl+"' WHERE Usuario.id="+ id +";";
 
+        con.query(sql, function (err, result) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result);
+            }
+            disconnectDB(con);
+        });
+    });
+};
 // ----------------------------------------------- FUNCIONES SQL PARA GAMES -------------------------------
 function insertGame(numPlayers, state, password) {
     return new Promise((resolve, reject) => {
