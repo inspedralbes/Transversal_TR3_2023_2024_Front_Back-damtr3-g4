@@ -11,6 +11,9 @@ const server = http.createServer(app);
 const port = 3789;
 const { Client } = require('ssh2');
 const xmlrpc = require('xmlrpc'); //Se utiliza para establecer la conexión con Odoo
+const { exec } = require('child_process');
+const Docker = require('dockerode');
+const docker = new Docker();
 
 
 app.use(express.json());
@@ -46,6 +49,62 @@ const {
 
 app.get("/allUsers", async (req, res) => {
     res.send(await selectUsers());
+});
+
+app.post('/runBackdocker', async (req, res) => {
+    // Verificar si el contenedor está en ejecución
+    const containers = await docker.listContainers({ all: true });
+    const dockernuxtContainer = containers.find(container => container.Image === 'dockernode');
+
+    if (dockernuxtContainer && dockernuxtContainer.State === 'running') {
+        // Si el contenedor está en ejecución, detenerlo
+        docker.getContainer(dockernuxtContainer.Id).stop(err => {
+            if (err) {
+                console.error('Error al detener el contenedor Docker:', err);
+                return res.status(500).send('Error al detener el contenedor Docker');
+            }
+            console.log('Contenedor Docker detenido correctamente');
+            res.send('Contenedor Docker detenido correctamente');
+        });
+    } else {
+        // Si el contenedor no está en ejecución o ya está detenido, iniciar uno nuevo
+        exec('docker run -d -p 3788:3788 dockernode', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error al ejecutar el comando: ${error}`);
+                return res.status(500).send('Error al iniciar el contenedor Docker');
+            }
+            console.log(`Contenedor Docker iniciado correctamente: ${stdout}`);
+            res.send('Contenedor Docker iniciado correctamente');
+        });
+    }
+});
+
+app.post('/runFrontdocker', async (req, res) => {
+    // Verificar si el contenedor está en ejecución
+    const containers = await docker.listContainers({ all: true });
+    const dockernuxtContainer = containers.find(container => container.Image === 'dockernuxt');
+
+    if (dockernuxtContainer && dockernuxtContainer.State === 'running') {
+        // Si el contenedor está en ejecución, detenerlo
+        docker.getContainer(dockernuxtContainer.Id).stop(err => {
+            if (err) {
+                console.error('Error al detener el contenedor Docker:', err);
+                return res.status(500).send('Error al detener el contenedor Docker');
+            }
+            console.log('Contenedor Docker detenido correctamente');
+            res.send('Contenedor Docker detenido correctamente');
+        });
+    } else {
+        // Si el contenedor no está en ejecución o ya está detenido, iniciar uno nuevo
+        exec('docker run -d -p 3000:3000 dockernuxt', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error al ejecutar el comando: ${error}`);
+                return res.status(500).send('Error al iniciar el contenedor Docker');
+            }
+            console.log(`Contenedor Docker iniciado correctamente: ${stdout}`);
+            res.send('Contenedor Docker iniciado correctamente');
+        });
+    }
 });
 
 app.post('/getOdooClients', async (req, res) => { //EndPoint para las estadísticas de los clientes
@@ -371,7 +430,7 @@ function ArrancarOdoo() {
                 .on('close', function (code, signal) {
                     console.log('Comando sudo docker start db ejecutado.');
                     // Luego detener el contenedor de Odoo
-                    con.exec('sudo docker start odoo', function (err, stream) { 
+                    con.exec('sudo docker start odoo', function (err, stream) {
                         if (err) throw err;
                         stream
                             .on('close', function (code, signal) {
@@ -443,22 +502,22 @@ function checkOdoo() {
 
 app.post('/stopOdoo', async (req, res) => {
     try {
-      await DetenerOdoo(); // Esperar a que la función DetenerOdoo() se complete
-      res.send('Odoo y db detenidas correctamente.');
+        await DetenerOdoo(); // Esperar a que la función DetenerOdoo() se complete
+        res.send('Odoo y db detenidas correctamente.');
     } catch (error) {
-      console.error('Error al detener Odoo:', error);
-      res.status(500).send('Error al detener Odoo.');
+        console.error('Error al detener Odoo:', error);
+        res.status(500).send('Error al detener Odoo.');
     }
-  });
+});
 
-app.post('/startOdoo', async (req, res)=>{
+app.post('/startOdoo', async (req, res) => {
     try {
         await ArrancarOdoo(); // Esperar a que la función DetenerOdoo() se complete
         res.send('Odoo y db arrancadas correctamente.');
-      } catch (error) {
+    } catch (error) {
         console.error('Error al arrancar Odoo:', error);
         res.status(500).send('Error al arrancar Odoo.');
-      }
+    }
 })
 
 app.post('/checkOdoo', async (req, res) => {
@@ -551,7 +610,7 @@ app.post("/ConnectionOdoo", async (req, res) => {
                 };
                 const objectClient = xmlrpc.createClient(objectClientOptions);
 
-                objectClient.methodCall('execute_kw', [db, uid, password, 'product.product', 'search_read', [[]], {fields: ['name', 'list_price']}], (error, products) => {
+                objectClient.methodCall('execute_kw', [db, uid, password, 'product.product', 'search_read', [[]], { fields: ['name', 'list_price'] }], (error, products) => {
                     if (error) {
                         console.error('Error al obtener la lista de productos:', error);
                         res.status(500).send('Error al obtener la lista de productos');

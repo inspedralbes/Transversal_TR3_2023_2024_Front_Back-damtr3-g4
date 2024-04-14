@@ -10,5 +10,8 @@ COPY . .
 
 CMD [ "npm", "start" ]
 
+#Para generar la imagen
+#docker build -t dockernode .
+
 #Para volver a arrancar el docker del node hacer
 #docker run -d -p 3789:3789 dockernode

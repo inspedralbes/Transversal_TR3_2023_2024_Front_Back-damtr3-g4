@@ -16,5 +16,8 @@ EXPOSE 3000
 
 CMD [ "npm", "start" ]
 
+#Para crear la imagen
+#docker build -t dockernuxt .
+
 #Para volver a arrancar el docker hacer
 #docker run -d -p 3000:3000  run -d -p 3000:3000 dockernuxt
