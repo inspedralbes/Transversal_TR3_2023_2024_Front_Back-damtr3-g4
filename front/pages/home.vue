@@ -1,30 +1,50 @@
 <template>
     <div class="back-home">
-        <div>
-            <Navigation />
-            <div v-for="(item, index) in info" :key="index" class="card-item" cols="12" md="4">
-                <div class="card">
-                    <div>
-                        <div class="card-item">
+        <Navigation />
+        <h1 style="display: flex; justify-content: center; font-family: 'gaming'; font-size: 60px; color: white;">N O T
+            I C I A S</h1>
+        <div class="container-elements">
+
+            <div>
+                <div v-for="(item, index) in info" :key="index" class="carditem">
+                    <div class="cardInfo">
+                        <div class="cardHeader">
                             <h3>{{ item.title }}</h3>
                         </div>
-                        <img :src="item.picture" :alt="personatge.name_character" class="card-image" />
-                        <div class="card-item">
+                        <div class="cardBody">
                             <p>{{ item.description }}</p>
+                            <img :src="item.picture" class="cardImage" />
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="container-form">
+                <div class="new-card-form">
+                    <h3>Añadir Nueva Noticia</h3>
+                    <form @submit.prevent="postInfo" enctype="multipart/form-data">
+                        <div style="display: flex; flex-direction: column;">
+                            <label for="title">Título</label>
+                            <input type="text" id="title" v-model="newInfo.title" required>
+                            <label for="description">Descripción:</label>
+                            <textarea id="description" v-model="newInfo.description" required></textarea>
+                            <label for="image">Imagen:</label>
+                            <input type="file" id="image" @change="handleFileUpload" show-size accept="image/*"
+                                required>
+                            <button type="submit">Añadir Tarjeta</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-    <main></main>
-    </div>
 </template>
+
 
 <script>
 import Navigation from '~/layouts/Navigation.vue'
 import { useAppStore } from '@/store/loginStore';
 import { useRouter } from 'vue-router';
-import { getInfo } from '~/services/communicationManager';
+import { getInfo, postInfo } from '~/services/communicationManager';
 
 export default {
     components: {
@@ -33,6 +53,11 @@ export default {
     data() {
         return {
             info: [],
+            newInfo: {
+                title: '',
+                description: '',
+                image: null
+            }
         };
     },
     mounted() {
@@ -56,36 +81,102 @@ export default {
                 console.error(error);
             }
         },
+        handleFileUpload(event) {
+            const file = event.target.files[0];
+            this.newInfo.image = file;
+            console.log(this.newInfo.image);
+        },
+
+        async postInfo(){
+
+            console.log('Nueva info:', this.newInfo);
+            await postInfo(this.newInfo);
+            this.info = await getInfo();
+        }
     },
 };
 </script>
 
 <style>
 .back-home {
-    background-image: url('https://cdn1.epicgames.com/ue/product/Screenshot/Screenshot11-1920x1080-9cd976fd185dbf1d32c0b6e5c1ff87e3.jpg?resize=1&w=1920');
+    background-image: url('https://images4.alphacoders.com/995/995128.jpg');
     background-repeat: no-repeat;
     background-attachment: fixed;
 }
 
-.card {
-    width: 90%;
-    /* Cambiado a porcentaje para que se ajuste al ancho del contenedor */
-    max-width: 100%;
+.container-elements {
+    display: flex;
+    justify-content: center;
+}
+
+.carditem {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.cardInfo {
+    font-family: gaming;
+    width: 80%;
     /* Establece un ancho máximo */
-    height: 20%;
+    border-radius: 30px;
+    padding: 10px;
     /* Cambiado a auto para mantener la proporción */
     background: rgb(236, 236, 236);
     box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
 }
 
-.card-item {
+.new-card-form {
+    font-family: gaming;
+    border-radius: 30px;
+    padding: 10px;
+    background: rgb(236, 236, 236);
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+
+.container-form {
+    padding: 10px;
+    width: 80%;
+    height: 70%;
+}
+
+.cardContent {
+    display: flex;
+    /* Alinear elementos verticalmente */
+    align-items: center;
+    /* Alinear elementos horizontalmente */
+    justify-content: space-between;
+}
+
+.cardHeader {
+    /* Estilos para el título */
+
+}
+
+.cardBody {
+    display: flex;
+    align-items: center;
+
+    /* Estilos adicionales si es necesario */
+}
+
+.cardImage {
+    /* Estilos existentes... */
+    width: 250px;
+    height: 250%;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.cardItem {
     padding: 20px;
     border-bottom: 1px solid #ccc;
 }
 
 /* Media query para dispositivos de pantalla más pequeños */
 @media (max-width: 768px) {
-    .card {
+    .cardInfo {
         width: 95%;
         /* Reducir el ancho para dispositivos más pequeños */
         max-width: none;
@@ -93,5 +184,18 @@ export default {
         height: auto;
         /* Cambiar a auto para mantener la proporción */
     }
+}
+
+@font-face {
+    font-family: gaming;
+    src: url('../gaming.ttf');
+}
+
+.new-card-form {
+    width: 40%;
+}
+
+.new-card-form form {
+    /* Estilos para el formulario */
 }
 </style>

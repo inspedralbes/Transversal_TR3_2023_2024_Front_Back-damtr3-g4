@@ -23,7 +23,7 @@ module.exports = {
     insertInfo,
     getInfo
 }
-async function insertData(nameCharacter, description, picture) {
+async function insertData(nameCharacter, description, picture, price, phrase, sprite) {
   try {
     await client.connect();
     const database = client.db(dbName);
@@ -31,8 +31,10 @@ async function insertData(nameCharacter, description, picture) {
     const data = {
       name_character: nameCharacter,
       description: description,
-      phraseId: phrase,
       picture: picture,
+      price: price,
+      idPhrase: phrase,
+      sprite: sprite
     };
     const result = await collection.insertOne(data);
     console.log(`Se inserto correctamente`);
@@ -196,9 +198,3 @@ async function getInfo() {
     await client.close();
   }
 }
-
-
-
-
-
-

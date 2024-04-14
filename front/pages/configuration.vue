@@ -1,89 +1,91 @@
 <template>
-    <div>
+    <div class="back-configuration">
         <Navigation />
-    </div>
-    <main>
-        <div class="container-broadcast">
-            <div class="row">
-                <div v-for="(phrase, index) in phrases" cols="12" md="4">
-                    <div class="cardSettings">
-                        <div>
-                            <div class="container-phrase">
-                                <!-- Mostrar el texto si no estamos editando esta frase -->
-                                <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
-                                <!-- Mostrar el campo de entrada si estamos editando esta frase -->
-                                <input v-else v-model="editedPhrase" type="text">
-                            </div>
+        <h1 style="display: flex; justify-content: center; font-family: 'gaming'; font-size: 60px; color: white;">C O N
+            F I G U R A C I O N</h1>
+        <main>
+            <div class="container-broadcast">
+                <div class="row">
+                    <div v-for="(phrase, index) in phrases" cols="12" md="4">
+                        <div class="cardSettings">
                             <div>
-                                <!-- Pasa el índice de la frase al método openModal -->
-                                <button v-if="editingPhraseIndex == null" class="edit-button"
-                                    @click="openModal(index)">Editar</button>
-                                <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
-                                <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
-                                <button v-if="editingPhraseIndex === index" class="edit-button"
-                                    @click="saveEditedPhrase(phrase._id)">Guardar</button>
-                                <button v-if="editingPhraseIndex === index" class="edit-button"
-                                    @click="closeModal()">Cancelar</button>
+                                <div class="container-phrase">
+                                    <!-- Mostrar el texto si no estamos editando esta frase -->
+                                    <h2 v-if="editingPhraseIndex !== index">{{ phrase.message }}</h2>
+                                    <!-- Mostrar el campo de entrada si estamos editando esta frase -->
+                                    <input v-else v-model="editedPhrase" type="text">
+                                </div>
+                                <div>
+                                    <!-- Pasa el índice de la frase al método openModal -->
+                                    <button v-if="editingPhraseIndex == null" class="edit-button"
+                                        @click="openModal(index)">Editar</button>
+                                    <button v-if="editingPhraseIndex == null" class="delet-button">Eliminar</button>
+                                    <!-- Mostrar botón de confirmación solo cuando estamos editando una frase -->
+                                    <button v-if="editingPhraseIndex === index" class="edit-button"
+                                        @click="saveEditedPhrase(phrase._id)">Guardar</button>
+                                    <button v-if="editingPhraseIndex === index" class="edit-button"
+                                        @click="closeModal()">Cancelar</button>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="container-audio">
-            <!-- Sección de menú -->
-            <div class="container-menu">
-                <h3 style="font-family: gaming; display: flex; justify-content: center;">Menú</h3>
-                <div v-for="(menuAudio, index) in menuAudios" :key="index" class="audio-item">
-                    <input type="radio" v-model="selectedMenuAudio" :value="menuAudio"
-                        @change="selectMenuAudio(menuAudio)">
-                    <audio class="aud" :src="menuAudio" type="audio/mpeg" controls>
-                        Tu navegador no soporta el elemento de audio.
-                    </audio>
-                </div>
-            </div>
-            <!-- Sección de batalla -->
-            <div class="container-battle">
-                <h3 style="font-family: gaming; display: flex; justify-content: center;">Batalla</h3>
-                <div v-for="(battleAudio, index) in battleAudios" :key="index" class="audio-item">
-                    <input type="radio" v-model="selectedBattleAudio" :value="battleAudio"
-                        @change="selectBattleAudio(battleAudio)">
-                    <audio class="aud" :src="battleAudio" type="audio/mpeg" controls>
-                        Tu navegador no soporta el elemento de audio.
-                    </audio>
-                </div>
-            </div>
-        </div>
-        <div class="container-odoo">
-            <div class="buttons-odoo">
-                <div class="button_pair">
-                </div>
-                <div class="button_pair">
-                    <div class="btn">
-                        <button class="button4" @click="statusOdoo(true)">
-                            <span class="button_text">PLAY</span>
-                        </button>
+            <div class="container-audio">
+                <!-- Sección de menú -->
+                <div class="container-menu">
+                    <h3 style="font-family: gaming; display: flex; justify-content: center; color: white;">Menú</h3>
+                    <div v-for="(menuAudio, index) in menuAudios" :key="index" class="audio-item">
+                        <input type="radio" v-model="selectedMenuAudio" :value="menuAudio"
+                            @change="selectMenuAudio(menuAudio)">
+                        <audio class="aud" :src="menuAudio" type="audio/mpeg" controls>
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
                     </div>
-                    <div class="btn">
-                        <button class="button3" @click="statusOdoo(false)">
-                            <span class="button_text">STOP</span>
-                        </button>
-                    </div>
-                    <div class="btn">
-                        <button class="button4" @click="updateUser()">
-                            <span class="button_text">SYNCOdoo</span>
-                        </button>
+                </div>
+                <!-- Sección de batalla -->
+                <div class="container-battle">
+                    <h3 style="font-family: gaming; display: flex; justify-content: center; color: white">Batalla</h3>
+                    <div v-for="(battleAudio, index) in battleAudios" :key="index" class="audio-item">
+                        <input type="radio" v-model="selectedBattleAudio" :value="battleAudio"
+                            @change="selectBattleAudio(battleAudio)">
+                        <audio class="aud" :src="battleAudio" type="audio/mpeg" controls>
+                            Tu navegador no soporta el elemento de audio.
+                        </audio>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+            <div class="container-odoo">
+                <div class="buttons-odoo">
+                    <div class="button_pair">
+                    </div>
+                    <div class="button_pair">
+                        <div class="btn">
+                            <button class="button4" @click="statusOdoo(true)">
+                                <span class="button_text">PLAY</span>
+                            </button>
+                        </div>
+                        <div class="btn">
+                            <button class="button3" @click="statusOdoo(false)">
+                                <span class="button_text">STOP</span>
+                            </button>
+                        </div>
+                        <div class="btn">
+                            <button class="button4" @click="updateUser()">
+                                <span class="button_text">SYNCOdoo</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 </template>
 <script>
 import Navigation from '~/layouts/Navigation.vue';
 import { useAppStore } from '@/store/loginStore';
 import { useRouter } from 'vue-router';
-import { getData,getBroadcast, getAudios, sendAudio, procesOdoo, editMessage, syncOdoo } from '~/services/communicationManager';
+import { getData, getBroadcast, getAudios, sendAudio, procesOdoo, editMessage, syncOdoo } from '~/services/communicationManager';
 
 export default {
     components: {
@@ -151,7 +153,7 @@ export default {
         async saveEditedPhrase(id) {
             console.log(id);
             // Actualiza el mensaje de la frase con el texto editado
-            const update = await editMessage(id ,this.editedPhrase);
+            const update = await editMessage(id, this.editedPhrase);
             this.editedPhrase = '';
             this.closeModal();
         },
@@ -166,6 +168,15 @@ export default {
 }
 </script>
 <style>
+.back-configuration {
+    background-image: url('https://images4.alphacoders.com/995/995128.jpg');
+    max-width: 100%;
+    max-height: 100%;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+}
+
 main {
     display: flex;
     flex-direction: column;
@@ -177,14 +188,14 @@ main {
     flex-wrap: wrap;
     justify-content: space-around;
     padding: 10px;
-    border: 2px black solid;
+    border: 2px rgb(255, 255, 255) solid;
     position: relative;
     margin: 30px;
     width: 80%;
 }
 
 .container-broadcast:before {
-    content: "Broadcast";
+    content: "Frases Personajes";
     position: absolute;
     font-family: gaming;
     top: -10px;
@@ -200,7 +211,7 @@ main {
     justify-content: space-around;
     padding: 10px;
     margin-top: 10px;
-    border: 2px black solid;
+    border: 2px rgb(255, 255, 255) solid;
     position: relative;
     width: 80%;
 }
@@ -217,7 +228,7 @@ main {
 }
 
 .aud {
-    border: 2px solid black;
+    border: 2px solid rgb(255, 255, 255);
     background-color: #f7f5f5;
 }
 
@@ -307,7 +318,7 @@ main {
     justify-content: space-around;
     padding: 10px;
     margin-top: 10px;
-    border: 2px black solid;
+    border: 2px rgb(255, 255, 255) solid;
     position: relative;
     width: 80%;
 }

@@ -1,6 +1,5 @@
 const express = require("express");
 const session = require("express-session");
-
 const http = require("http");
 const xmlrpc = require("xmlrpc");
 const fs = require("fs");
@@ -13,6 +12,9 @@ const app = express();
 const server = http.createServer(app);
 const bodyParser = require("body-parser");
 const { Client } = require('ssh2');
+const fileUpload = require('express-fileupload');
+const Docker = require('dockerode');
+const docker = new Docker();
 const port = 3789;
 const musicMenuURL = "http//:localhost:3789/music/menu.mp3";
 const musicGameURL = "http//:localhost:3789/music/battle.mp3";
@@ -20,11 +22,12 @@ const musicGameURL = "http//:localhost:3789/music/battle.mp3";
 app.use(express.json());
 app.use(cors());
 app.use(bodyParser.json());
+app.use(fileUpload());
 // Servir archivos estáticos desde la carpeta 'assets'
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 const routeImg = path.join(__dirname, "assetsForAndroid");
 app.use("/assetsForAndroid", express.static(routeImg));
-
+app.use("/infoPicture", express.static(path.join(__dirname, "infoPicture")));
 // Ruta donde se encuentran los archivos de audio
 const audioFolder = path.join(__dirname, "music");
 app.use("/audio", express.static(audioFolder));
@@ -286,10 +289,30 @@ app.post("/returnAudioGame", (req, res) => {
 
 app.post('/info', async (req, res) => {
   // Recoge los datos del cuerpo de la solicitud
-  const { title, description,picture } = req.body;
+  const infoObject = req.body;
+    console.log(infoObject);
+    const title = infoObject.title;
+    const description = infoObject.description;
+    const picture = req.body.image;
+    const imageUrl = `http://tr3.dan.inspedralbes:3789/infoPicture/${picture}`;
+    const originalExtension = path.extname(imageFile.name);
+    const newFileName = `${picture.name}${originalExtension}`;
+    const uploadPath = path.join(__dirname, 'images', newFileName);
 
+    // Comprobar si el archivo ya existe
+    if (fs.existsSync(uploadPath)) {
+        // Si existe, eliminar el archivo existente antes de reemplazarlo
+        fs.unlinkSync(uploadPath);
+    }
+
+    imageFile.mv(uploadPath, function (err) { // funcion de introducir la imagen
+        if (err) {
+            return res.status(500).send(err);
+        }
+    });
   // Llama a la función insertInfo para insertar los datos en la base de datos
-  await insertInfo(title, description,picture);
+  console.log(imageUrl);
+  await insertInfo(title, description,imageUrl);
 
   // Responde con un mensaje indicando que se han insertado los datos correctamente
   res.send('Datos insertados correctamente en la base de datos.');
@@ -1120,6 +1143,62 @@ app.post('/getOdooClients', async (req, res) => { //EndPoint para las estadísti
         res.status(500).send('Error al obtener las estadísticas de ventas');
     }
   });
+
+  app.post('/runBackdocker', async (req, res) => {
+    // Verificar si el contenedor está en ejecución
+    const containers = await docker.listContainers({ all: true });
+    const dockernuxtContainer = containers.find(container => container.Image === 'dockernode');
+
+    if (dockernuxtContainer && dockernuxtContainer.State === 'running') {
+        // Si el contenedor está en ejecución, detenerlo
+        docker.getContainer(dockernuxtContainer.Id).stop(err => {
+            if (err) {
+                console.error('Error al detener el contenedor Docker:', err);
+                return res.status(500).send('Error al detener el contenedor Docker');
+            }
+            console.log('Contenedor Docker detenido correctamente');
+            res.send('Contenedor Docker detenido correctamente');
+        });
+    } else {
+        // Si el contenedor no está en ejecución o ya está detenido, iniciar uno nuevo
+        exec('docker run -d -p 3788:3788 dockernode', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error al ejecutar el comando: ${error}`);
+                return res.status(500).send('Error al iniciar el contenedor Docker');
+            }
+            console.log(`Contenedor Docker iniciado correctamente: ${stdout}`);
+            res.send('Contenedor Docker iniciado correctamente');
+        });
+    }
+});
+
+app.post('/runFrontdocker', async (req, res) => {
+    // Verificar si el contenedor está en ejecución
+    const containers = await docker.listContainers({ all: true });
+    const dockernuxtContainer = containers.find(container => container.Image === 'dockernuxt');
+
+    if (dockernuxtContainer && dockernuxtContainer.State === 'running') {
+        // Si el contenedor está en ejecución, detenerlo
+        docker.getContainer(dockernuxtContainer.Id).stop(err => {
+            if (err) {
+                console.error('Error al detener el contenedor Docker:', err);
+                return res.status(500).send('Error al detener el contenedor Docker');
+            }
+            console.log('Contenedor Docker detenido correctamente');
+            res.send('Contenedor Docker detenido correctamente');
+        });
+    } else {
+        // Si el contenedor no está en ejecución o ya está detenido, iniciar uno nuevo
+        exec('docker run -d -p 3000:3000 dockernuxt', (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Error al ejecutar el comando: ${error}`);
+                return res.status(500).send('Error al iniciar el contenedor Docker');
+            }
+            console.log(`Contenedor Docker iniciado correctamente: ${stdout}`);
+            res.send('Contenedor Docker iniciado correctamente');
+        });
+    }
+});
 
 
 // -------------------------------------------------------- SOCKETS ----------------------------------------
