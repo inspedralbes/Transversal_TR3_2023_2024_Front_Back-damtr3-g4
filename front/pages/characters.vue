@@ -1,4 +1,5 @@
 <template>
+    <div class="back-character">
     <Navigation />
     <main>
         <div class="container">
@@ -22,6 +23,7 @@
             </div>
         </div>
     </main>
+</div>
 </template>
 <script>
 import Navigation from '~/layouts/Navigation.vue';
@@ -50,6 +52,12 @@ export default {
 }
 </script>
 <style>
+
+.back-character {
+    background-image: url('https://images4.alphacoders.com/995/995128.jpg');
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
 .container {
     display: flex;
     flex-wrap: wrap;
@@ -90,12 +98,11 @@ export default {
 }
 
 .card-image {
-    max-width: 70%;
-    max-height: 80%;
+    width: 250px;
+    height: 250%;
     object-fit: cover;
     border-radius: 17px 17px 0 0;
     object-fit: cover;
-    aspect-ratio: 2/3;
 }
 
 .container-buttons {
